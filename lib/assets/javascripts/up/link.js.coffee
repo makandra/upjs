@@ -106,33 +106,39 @@ up.link = (->
   @param {String} [options.target]
     The selector to replace.
     Defaults to the `up-target` attribute on `link`,
-    or to `body` if such an attribute does not exist.
+    or to `body` if no such attribute exists.
+  @param {String} [options.url]
+    The URL for the request.
+    Defaults to the `href` or `up-follow` or `up-href` attribute on `link`.
+  @param {String} [options.method]
+    The method for the request.
+    Defaults to the `up-method` or `data-method` attribute on `link`,
+    or to `get` if no such attribute exists.
   @param {Function|String} [options.transition]
     A transition function or name.
-  @param {Element|jQuery|String} scroll
+  @param {Element|jQuery|String} [options.scroll]
     An element or selector that will be scrolled to the top in
     case the replaced element is not visible in the viewport.
   ###
   follow = (link, options) ->
     $link = $(link)
-
     options = u.options(options)
-    url = u.option($link.attr('href'), $link.attr('up-follow'))
+    url = u.option(options.url, $link.attr('href'), $link.attr('up-follow'), $link.attr('up-href'))
     selector = u.option(options.target, $link.attr('up-target'), 'body')
     options.transition = u.option(options.transition, $link.attr('up-transition'), $link.attr('up-animation')) 
     options.history = u.option(options.history, $link.attr('up-history'))
     options.scroll = u.option(options.history, $link.attr('up-scroll'), 'body')
+    options.method = u.option(options.method, $link.attr('up-method'), $link.attr('data-method'), 'get')
     
     up.replace(selector, url, options)
 
   resolve = (element) ->
     $element = $(element)
-    followAttr = $element.attr('up-follow')
-    if $element.is('a') || (u.isPresent(followAttr) && !u.castsToTrue(followAttr))
-      $element
-    else
+    if $element.is('[up-extend]')
       $element.find('a:first')
-      
+    else
+      $element
+
   ###*
   Follows this link via AJAX and replaces a CSS selector in the current page
   with corresponding elements from a new page fetched from the server:
@@ -164,7 +170,7 @@ up.link = (->
       follow($link)
     
   up.on 'mousedown', 'a[up-target][up-instant]', (event, $link) ->
-    if activeInstantLink(event, $link)
+    if u.isUnmodifiedMouseEvent(event) && !childClicked(event, $link)
       event.preventDefault()
       up.follow($link)
 
@@ -176,10 +182,7 @@ up.link = (->
     $target = $(event.target)
     $targetLink = $target.closest('a, [up-follow]')
     $targetLink.length && $link.find($targetLink).length
-    
-  activeInstantLink = (event, $link) ->
-    u.isUnmodifiedMouseEvent(event) && !childClicked(event, $link)
-    
+
   ###*
   If applied on a link, Follows this link via AJAX and replaces the
   current `<body>` element with the response's `<body>` element
@@ -196,17 +199,6 @@ up.link = (->
   navigation actions this isn't needed. E.g. popular operation
   systems switch tabs on `mousedown`.
 
-  You can also apply `[up-follow]` to any element that contains a link
-  in order to enlarge the link's click area:
-
-      <div class="notification" up-follow>
-         Record was saved!
-         <a href="/records">Close</a>
-      </div>
-
-  In the example above, clicking anywhere within `.notification` element
-  would follow the `Close` link.
-
   @method [up-follow]
   @ujs
   @param {String} [up-follow]
@@ -214,17 +206,35 @@ up.link = (->
     If set, fetches the element on `mousedown` instead of `click`.
   ###
   up.on 'click', '[up-follow]', (event, $link) ->
-    unless childClicked(event, $link)
-      event.preventDefault()
-      # Check if the event was already triggered by `mousedown`
-      unless $link.is('[up-instant]')
-        follow(resolve($link))
+    event.preventDefault()
+    # Check if the event was already triggered by `mousedown`
+    unless $link.is('[up-instant]')
+      follow($link)
 
   up.on 'mousedown', '[up-follow][up-instant]', (event, $link) ->
-    if activeInstantLink(event, $link)
+    if u.isUnmodifiedMouseEvent(event) && !childClicked(event, $link)
       event.preventDefault()
-      up.follow(resolve($link))
-  
+      up.follow($link)
+
+  ###*
+  @ujs
+  @method [up-extend]
+  ###
+  up.on 'click', '[up-extend]', (event, $extendedArea) ->
+    unless childClicked(event, $extendedArea)
+      event.preventDefault()
+      $link = resolve($link)
+      # Check if the event was already triggered by `mousedown`
+      unless $link.is('[up-instant]')
+        follow($link)
+
+  up.on 'mousedown', '[up-extend]', (event, $extendedArea) ->
+    if u.isUnmodifiedMouseEvent(event) && !childClicked(event, $extendedArea)
+      $link = resolve($link)
+      if $link.is('[up-instant]')
+        event.preventDefault()
+        follow($link)
+
   ###*
   Marks up the current link to be followed *as fast as possible*.
   This is done by:

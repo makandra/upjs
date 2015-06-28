@@ -64,10 +64,10 @@ describe 'up.navigation', ->
         expect($link).not.toHaveClass('up-active')
         expect($link).toHaveClass('up-current')
     
-      it 'prefers to mark an enclosing [up-follow] click area', ->
-        $area = affix('div[up-follow] a[href="/foo"][up-target=".main"]')
+      it 'prefers to mark an enclosing [up-expand] click area', ->
+        $area = affix('div[up-expand] a[href="/foo"][up-target=".main"]')
         $link = $area.find('a')
-        affix('.main')
+        $main = affix('.main')
         jasmine.Ajax.install()
         $link.click()
         expect($area).toHaveClass('up-active')
@@ -75,5 +75,6 @@ describe 'up.navigation', ->
           status: 200
           contentType: 'text/html'
           responseText: '<div class="main">new-text</div>'
+        expect($main).toHaveText('new-text')
         expect($area).toHaveClass('up-current')
         

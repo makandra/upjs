@@ -21,6 +21,12 @@ From Up's point of view the "current" location is either:
 - the source URL of a currently opened [modal dialog](/up.modal)
 - the source URL of a currently opened [popup overlay](/up.popup)
 
+A link will match the current URL if either:
+
+- its `href` attribute matches the URL
+- its `up-href` attribute matches the URL
+- its `up-follow` attribute matches the URL
+
 @class up.navigation
 ###
 up.navigation = (->
@@ -29,7 +35,7 @@ up.navigation = (->
 
   CLASS_ACTIVE = 'up-active'
   CLASS_CURRENT = 'up-current'
-  SELECTORS_SECTION = ['a[href]', 'a[up-target]', '[up-follow]', '[up-modal]', '[up-popup]', '[up-href]']
+  SELECTORS_SECTION = ['a[href]', 'a[up-target]', '[up-follow]', '[up-modal]', '[up-popup]', '[up-href]', '[up-expand]']
   SELECTOR_SECTION = SELECTORS_SECTION.join(', ')
   SELECTOR_SECTION_INSTANT = ("#{selector}[up-instant]" for selector in SELECTORS_SECTION).join(', ')
   SELECTOR_ACTIVE = ".#{CLASS_ACTIVE}"
@@ -85,7 +91,7 @@ up.navigation = (->
   up.on 'mousedown', SELECTOR_SECTION_INSTANT, (event, $section) ->
     if u.isUnmodifiedMouseEvent(event)
       sectionClicked($section)
-      
+
   # When a fragment is ready it might either have brought a location change
   # with it, or it might have opened a modal / popup which we consider
   # to be secondary location sources (the primary being the browser's
