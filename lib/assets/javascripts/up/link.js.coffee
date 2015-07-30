@@ -133,11 +133,11 @@ up.link = (->
     An element or selector that will be scrolled to the top in
     case the replaced element is not visible in the viewport.
   @param {Number} [options.duration]
-    The duration of the transition. See [`up.morph`](/up.motion#up.morph).
+    The duration of the transition. See [`up.transition`](/up.motion#up.transition).
   @param {Number} [options.delay]
-    The delay before the transition starts. See [`up.morph`](/up.motion#up.morph).
+    The delay before the transition starts. See [`up.transition`](/up.motion#up.transition).
   @param {String} [options.easing]
-    The timing function that controls the transition's acceleration. [`up.morph`](/up.motion#up.morph).
+    The timing function that controls the transition's acceleration. [`up.transition`](/up.motion#up.transition).
   ###
   follow = (link, options) ->
     $link = $(link)

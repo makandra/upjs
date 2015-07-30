@@ -77,7 +77,7 @@ up.motion = (->
   | `move-from-right`  | Moves the element leftwards from beyond the right  edge of the screen until it reaches its current position |
   | `none`             | An animation that has no visible effect. Sounds useless at first, but can save you a lot of `if` statements. |
 
-  You can define additional named animations using [`up.animation`](#up.animation).
+  You can define additional named animations using [`up.addAnimation`](#up.addAnimation).
 
   \#\#\#\# Animating CSS properties directly
 
@@ -209,6 +209,10 @@ up.motion = (->
   Transitions are implement by performing two animations in parallel,
   causing one element to disappear and the other to appear.
 
+      var $first = $('...');
+      var $second = $('...');
+      up.transition($first, $second, 'cross-fade');
+
   Note that the transition does not remove any elements from the DOM.
   The first element will remain in the DOM, albeit hidden using `display: none`.
 
@@ -223,7 +227,7 @@ up.motion = (->
   | `move-right` | Moves the first element rightwards until it exists the screen at the right edge. Simultaneously moves the second element rightwards from beyond the left edge of the screen until it reaches its current position. |
   | `none`       | A transition that has no visible effect. Sounds useless at first, but can save you a lot of `if` statements. |
 
-  You can define additional named transitions using [`up.transition`](#up.transition).
+  You can define additional named transitions using [`up.addTransition`](#up.addTransition).
   
   You can also compose a transition from two [named animations](#named-animations).
   separated by a slash character (`/`):
@@ -231,7 +235,7 @@ up.motion = (->
   - `move-to-bottom/fade-in`
   - `move-to-left/move-from-top`
   
-  @method up.morph
+  @method up.transition
   @param {Element|jQuery|String} source
   @param {Element|jQuery|String} target
   @param {Function|String} transitionOrName
@@ -246,7 +250,7 @@ up.motion = (->
   @return {Promise}
     A promise for the transition's end.
   ###  
-  morph = (source, target, transitionOrName, options) ->
+  transition = (source, target, transitionOrName, options) ->
     if up.browser.canCssAnimation()
       options = animateOptions(options)
       $old = $(source)
@@ -256,20 +260,20 @@ up.motion = (->
       if transitionOrName == 'none'
         # don't create ghosts if we aren't really transitioning
         none()
-      else if transition = u.presence(transitionOrName, u.isFunction) || transitions[transitionOrName]
+      else if transitionFunction = u.presence(transitionOrName, u.isFunction) || transitions[transitionOrName]
         withGhosts $old, $new, ($oldGhost, $newGhost) ->
-          assertIsDeferred(transition($oldGhost, $newGhost, options), transitionOrName)
+          assertIsDeferred(transitionFunction($oldGhost, $newGhost, options), transitionOrName)
       else if animation = animations[transitionOrName]
         $old.hide()
         animate($new, animation, options)
       else if u.isString(transitionOrName) && transitionOrName.indexOf('/') >= 0
         parts = transitionOrName.split('/')
-        transition = ($old, $new, options) ->
+        transitionFunction = ($old, $new, options) ->
           resolvableWhen(
             animate($old, parts[0], options),
             animate($new, parts[1], options)
           )
-        morph($old, $new, transition, options)
+        transition($old, $new, transitionFunction, options)
       else
         u.error("Unknown transition %o", transitionOrName)
     else
@@ -282,7 +286,7 @@ up.motion = (->
 
   Here is the definition of the pre-defined `cross-fade` animation:
 
-      up.transition('cross-fade', ($old, $new, options) ->
+      up.addTransition('cross-fade', ($old, $new, options) ->
         up.motion.when(
           animate($old, 'fade-out', options),
           animate($new, 'fade-in', options)
@@ -301,14 +305,14 @@ up.motion = (->
   4. The returned promise responds to a `resolve()` function that
      instantly jumps to the last transition frame and resolves the promise.
 
-  Calling [`up.animate`](#up.animate) with an object argument
-  will take care of all these points.
+  Using [`up.animate`](#up.animate) with an object argument
+  (in combination with [`up.motion.when`]) will take care of all these points.
 
   @method up.transition
   @param {String} name
   @param {Function} transition
   ###
-  transition = (name, transition) ->
+  addTransition = (name, transition) ->
     transitions[name] = transition
 
   ###*
@@ -316,7 +320,7 @@ up.motion = (->
 
   Here is the definition of the pre-defined `fade-in` animation:
 
-      up.animation('fade-in', ($ghost, options) ->
+      up.addAnimation('fade-in', ($ghost, options) ->
         $ghost.css(opacity: 0)
         animate($ghost, { opacity: 1 }, options)
       )
@@ -337,11 +341,11 @@ up.motion = (->
   Calling [`up.animate`](#up.animate) with an object argument
   will take care of all these points.
 
-  @method up.animation
+  @method up.addAnimation
   @param {String} name
   @param {Function} animation
   ###
-  animation = (name, animation) ->
+  addAnimation = (name, animation) ->
     animations[name] = animation
 
   snapshot = ->
@@ -374,75 +378,75 @@ up.motion = (->
   ###
   none = u.resolvedDeferred
 
-  animation('none', none)
+  addAnimation('none', none)
 
-  animation('fade-in', ($ghost, options) ->
+  addAnimation('fade-in', ($ghost, options) ->
     $ghost.css(opacity: 0)
     animate($ghost, { opacity: 1 }, options)
   )
 
-  animation('fade-out', ($ghost, options) ->
+  addAnimation('fade-out', ($ghost, options) ->
     $ghost.css(opacity: 1)
     animate($ghost, { opacity: 0 }, options)
   )
 
-  animation('move-to-top', ($ghost, options) ->
+  addAnimation('move-to-top', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = box.top + box.height
     $ghost.css('margin-top': '0px')
     animate($ghost, { 'margin-top': "-#{travelDistance}px" }, options)
   )
 
-  animation('move-from-top', ($ghost, options) ->
+  addAnimation('move-from-top', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = box.top + box.height
     $ghost.css('margin-top': "-#{travelDistance}px")
     animate($ghost, { 'margin-top': '0px' }, options)
   )
 
-  animation('move-to-bottom', ($ghost, options) ->
+  addAnimation('move-to-bottom', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = u.clientSize().height - box.top
     $ghost.css('margin-top': '0px')
     animate($ghost, { 'margin-top': "#{travelDistance}px" }, options)
   )
 
-  animation('move-from-bottom', ($ghost, options) ->
+  addAnimation('move-from-bottom', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = u.clientSize().height - box.top
     $ghost.css('margin-top': "#{travelDistance}px")
     animate($ghost, { 'margin-top': '0px' }, options)
   )
 
-  animation('move-to-left', ($ghost, options) ->
+  addAnimation('move-to-left', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = box.left + box.width
     $ghost.css('margin-left': '0px')
     animate($ghost, { 'margin-left': "-#{travelDistance}px" }, options)
   )
 
-  animation('move-from-left', ($ghost, options) ->
+  addAnimation('move-from-left', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = box.left + box.width
     $ghost.css('margin-left': "-#{travelDistance}px")
     animate($ghost, { 'margin-left': '0px' }, options)
   )
 
-  animation('move-to-right', ($ghost, options) ->
+  addAnimation('move-to-right', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = u.clientSize().width - box.left
     $ghost.css('margin-left': '0px')
     animate($ghost, { 'margin-left': "#{travelDistance}px" }, options)
   )
 
-  animation('move-from-right', ($ghost, options) ->
+  addAnimation('move-from-right', ($ghost, options) ->
     box = u.measure($ghost)
     travelDistance = u.clientSize().width - box.left
     $ghost.css('margin-left': "#{travelDistance}px")
     animate($ghost, { 'margin-left': '0px' }, options)
   )
 
-  animation('roll-down', ($ghost, options) ->
+  addAnimation('roll-down', ($ghost, options) ->
     fullHeight = $ghost.height()
     styleMemo = u.temporaryCss($ghost,
       height: '0px'
@@ -451,37 +455,37 @@ up.motion = (->
     animate($ghost, { height: "#{fullHeight}px" }, options).then(styleMemo)
   )
 
-  transition('none', none)
+  addTransition('none', none)
 
-  transition('move-left', ($old, $new, options) ->
+  addTransition('move-left', ($old, $new, options) ->
     resolvableWhen(
       animate($old, 'move-to-left', options),
       animate($new, 'move-from-right', options)
     )
   )
 
-  transition('move-right', ($old, $new, options) ->
+  addTransition('move-right', ($old, $new, options) ->
     resolvableWhen(
       animate($old, 'move-to-right', options),
       animate($new, 'move-from-left', options)
     )
   )
 
-  transition('move-up', ($old, $new, options) ->
+  addTransition('move-up', ($old, $new, options) ->
     resolvableWhen(
       animate($old, 'move-to-top', options),
       animate($new, 'move-from-bottom', options)
     )
   )
 
-  transition('move-down', ($old, $new, options) ->
+  addTransition('move-down', ($old, $new, options) ->
     resolvableWhen(
       animate($old, 'move-to-bottom', options),
       animate($new, 'move-from-top', options)
     )
   )
 
-  transition('cross-fade', ($old, $new, options) ->
+  addTransition('cross-fade', ($old, $new, options) ->
     resolvableWhen(
       animate($old, 'fade-out', options),
       animate($new, 'fade-in', options)
@@ -491,19 +495,19 @@ up.motion = (->
   up.bus.on 'framework:ready', snapshot
   up.bus.on 'framework:reset', reset
     
-  morph: morph
   animate: animate
   animateOptions: animateOptions
-  finish: finish
   transition: transition
-  animation: animation
+  finish: finish
+  addTransition: addTransition
+  addAnimation: addAnimation
   defaults: defaults
   none: none
   when: resolvableWhen
 
 )()
 
-up.transition = up.motion.transition
-up.animation = up.motion.animation
-up.morph = up.motion.morph
 up.animate = up.motion.animate
+up.transition = up.motion.transition
+up.addAnimation = up.motion.addAnimation
+up.addTransition = up.motion.addTransition

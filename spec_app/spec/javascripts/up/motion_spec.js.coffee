@@ -33,7 +33,7 @@ describe 'up.motion', ->
           expect($element.css('font-size')).toEqual('40px')
 
 
-    describe 'up.morph', ->
+    describe 'up.transition', ->
 
       if up.browser.canCssAnimation()
 
@@ -53,7 +53,7 @@ describe 'up.motion', ->
             width:    '22px',
             height:   '23px'
           )
-          up.morph($old, $new, 'cross-fade', duration: 100, easing: 'linear')
+          up.transition($old, $new, 'cross-fade', duration: 100, easing: 'linear')
 
           # The actual animation will be performed on Ghosts since
           # two element usually cannot exist in the DOM at the same time
@@ -134,11 +134,11 @@ describe 'up.motion', ->
           $old = affix('.old').text('old content')
           $new = affix('.new').text('new content')
 
-          up.morph($old, $new, 'cross-fade', duration: 200)
+          up.transition($old, $new, 'cross-fade', duration: 200)
           $ghost1 = $('.old.up-ghost')
           expect($ghost1).toHaveLength(1)
 
-          up.morph($old, $new, 'cross-fade', duration: 200)
+          up.transition($old, $new, 'cross-fade', duration: 200)
           $ghost2 = $('.old.up-ghost')
           # Check that we didn't create additional ghosts
           expect($ghost2).toHaveLength(1)
@@ -154,11 +154,11 @@ describe 'up.motion', ->
           expect($old).toBeHidden()
           expect($new).toBeVisible()
 
-    describe 'up.transition', ->
+    describe 'up.addTransition', ->
 
       it 'should have tests'
       
-    describe 'up.animation', ->
+    describe 'up.addAnimation', ->
 
       it 'should have tests'
       

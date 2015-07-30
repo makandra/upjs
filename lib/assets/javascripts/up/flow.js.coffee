@@ -224,7 +224,7 @@ up.flow = (->
         elementsInserted($new, options)
         if $old.is('body') && transition != 'none'
           u.error('Cannot apply transitions to body-elements (%o)', transition)
-        up.morph($old, $new, transition, options)
+        up.transition($old, $new, transition, options)
 
   parseImplantSteps = (selector, options) ->
     transitionString = options.transition || options.animation || 'none'

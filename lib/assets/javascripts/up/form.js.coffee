@@ -66,11 +66,11 @@ up.form = (->
     The transition to use when a failed form submission updates the `options.failTarget` selector.
     Defaults to the form's `up-fail-transition` attribute, or to `options.transition`, or to `'none'`.
   @param {Number} [options.duration]
-    The duration of the transition. See [`up.morph`](/up.motion#up.morph).
+    The duration of the transition. See [`up.transition`](/up.motion#up.transition).
   @param {Number} [options.delay]
-    The delay before the transition starts. See [`up.morph`](/up.motion#up.morph).
+    The delay before the transition starts. See [`up.transition`](/up.motion#up.transition).
   @param {String} [options.easing]
-    The timing function that controls the transition's acceleration. [`up.morph`](/up.motion#up.morph).
+    The timing function that controls the transition's acceleration. [`up.transition`](/up.motion#up.transition).
   @param {Boolean} [options.cache]
     Whether to accept a cached response.
   @return {Promise}
