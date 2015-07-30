@@ -10,10 +10,7 @@ For example, you might have
     <div up-slot class="alerts"></div>
 
     <script>
-      up.awaken('.alerts', function ($element) {
-
-        RELOAD SHOULD NOT CACHE
-
+      up.addParser('.alerts', function ($element) {
         setInterval(3000, function() { up.reload('.alerts') });
       });
     </script>

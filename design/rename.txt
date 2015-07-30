@@ -1,0 +1,10 @@
+up.transition => up.addTransition
+
+up.animation => up.addAnimation
+
+up.morph => up.transition
+
+up.awaken => up.addParser
+
+
+

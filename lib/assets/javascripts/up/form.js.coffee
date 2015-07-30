@@ -305,10 +305,10 @@ up.form = (->
   @ujs
   @param {String} up-observe 
   ###
-  up.awaken '[up-observe]', ($field) ->
+  up.addParser '[up-observe]', ($field) ->
     return observe($field)
 
-#  up.awaken '[up-autosubmit]', ($field) ->
+#  up.addParser '[up-autosubmit]', ($field) ->
 #    return observe($field, change: ->
 #      $form = $field.closest('form')
 #      $field.addClass('up-active')

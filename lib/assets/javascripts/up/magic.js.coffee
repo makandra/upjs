@@ -106,7 +106,7 @@ up.magic = (->
 
   This Javascript will do exactly that:
 
-      up.awaken('a[rel=lightbox]', function($element) {
+      up.addParser('a[rel=lightbox]', function($element) {
         $element.lightboxify();
       });
 
@@ -117,13 +117,13 @@ up.magic = (->
 
   \#\#\#\# Custom elements
 
-  You can also use `up.awaken` to implement custom elements like this:
+  You can also use `up.addParser` to implement custom elements like this:
 
       <current-time></current-time>
 
   Here is the Javascript that inserts the current time into to these elements:
 
-      up.awaken('current-time', function($element) {
+      up.addParser('current-time', function($element) {
         var now = new Date();
         $element.text(now.toString()));
       });
@@ -143,7 +143,7 @@ up.magic = (->
   Here is a version of `<current-time>` that updates
   the time every second, and cleans up once it's done:
 
-      up.awaken('current-time', function($element) {
+      up.addParser('current-time', function($element) {
 
         function update() {
           var now = new Date();
@@ -177,7 +177,7 @@ up.magic = (->
 
   The JSON will parsed and handed to your event handler as a second argument:
 
-      up.awaken('.google-map', function($element, pins) {
+      up.addParser('.google-map', function($element, pins) {
 
         var map = new google.maps.Map($element);
 
@@ -200,7 +200,7 @@ up.magic = (->
   this new syntax.
 
   
-  @method up.awaken
+  @method up.addParser
   @param {String} selector
     The selector to match.
   @param {Boolean} [options.batch=false]
@@ -220,7 +220,7 @@ up.magic = (->
   awakeners = []
   defaultAwakeners = null
 
-  awaken = (selector, args...) ->
+  addParser = (selector, args...) ->
     # Silently discard any awakeners that are registered on unsupported browsers
     return unless up.browser.isSupported()
     awakener = args.pop()
@@ -272,7 +272,7 @@ up.magic = (->
 
   If an element annotated with [`up-data`] is inserted into the DOM,
   Up will parse the JSON and pass the resulting object to any matching
-  [`up.awaken`](/up.magic#up.magic.awaken) handlers.
+  [`parsers`](/up.magic#up.magic.addParser).
 
   Similarly, when an event is triggered on an element annotated with
   [`up-data`], the parsed object will be passed to any matching
@@ -344,7 +344,7 @@ up.magic = (->
   up.bus.on 'framework:ready', snapshot
   up.bus.on 'framework:reset', reset
 
-  awaken: awaken
+  addParser: addParser
   on: live
   ready: ready
   onEscape: onEscape
@@ -352,6 +352,6 @@ up.magic = (->
 
 )()
 
-up.awaken = up.magic.awaken
+up.addParser = up.magic.addParser
 up.on = up.magic.on
 up.ready = up.magic.ready
