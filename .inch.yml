@@ -1,0 +1,4 @@
+files:
+  included:
+    - lib/assets/**/*.coffee
+    - lib/assets/**/*.js
