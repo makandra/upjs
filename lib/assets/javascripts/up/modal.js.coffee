@@ -20,7 +20,7 @@ up.modal = (->
     height: 'auto'
     openAnimation: 'fade-in'
     closeAnimation: 'fade-out'
-    closeLabel: 'X'
+    closeLabel: '×'
     template: (config) ->
       """
       <div class="up-modal">
@@ -94,9 +94,32 @@ up.modal = (->
     $modal.hide()
     $modal
 
+  unshiftBodyPadding = undefined
+
+  # Gives `<body>` a right padding in the width of a scrollbar.
+  # This is to prevent the body from jumping when we add the
+  # overlay, which has its own scroll bar.
+  shiftBody = ->
+    scrollbarWidth = u.scrollbarWidth()
+    bodyRightPadding = parseInt($('body').css('padding-right'))
+    bodyRightShift = scrollbarWidth + bodyRightPadding
+    unshiftBodyPadding = u.temporaryCss($('body'),
+      paddingRight: "#{bodyRightShift}px",
+      overflowY: 'hidden'
+    )
+
+  # Restores `<body>` the right padding.
+  unshiftBody = ->
+    unshiftBodyPadding?()
+    unshiftBodyPadding = undefined
+
   updated = ($modal, animation, animateOptions) ->
+    up.bus.emit('modal:open')
+    shiftBody()
     $modal.show()
-    up.animate($modal, animation, animateOptions)
+    promise = up.animate($modal, animation, animateOptions)
+    promise.then -> up.bus.emit('modal:opened')
+    promise
 
   ###*
   Opens the given link's destination in a modal overlay:
@@ -112,7 +135,14 @@ up.modal = (->
 
   This will request `/foo`, extract the `.list` selector from the response
   and open the selected container in a modal dialog.
-  
+
+  \#\#\#\# Events
+
+  - Emits an [event](/up.bus) `modal:open` when the modal
+    is starting to open.
+  - Emits an [event](/up.bus) `modal:opened` when the opening
+    animation has finished and the modal contents are fully visible.
+
   @method up.modal.open
   @param {Element|jQuery|String} [elementOrSelector]
     The link to follow.
@@ -184,6 +214,13 @@ up.modal = (->
   ###*
   Closes a currently opened modal overlay.
   Does nothing if no modal is currently open.
+
+  \#\#\#\# Events
+
+  - Emits an [event](/up.bus) `modal:close` when the modal
+    is starting to close.
+  - Emits an [event](/up.bus) `modal:closed` when the closing
+    animation has finished and the modal has been removed from the DOM.
   
   @method up.modal.close
   @param {Object} options
@@ -198,7 +235,14 @@ up.modal = (->
         title: $modal.attr('up-previous-title')
       )
       currentSource = undefined
-      up.destroy($modal, options)
+      up.bus.emit('modal:close')
+      promise = up.destroy($modal, options)
+      promise.then ->
+        unshiftBody()
+        up.bus.emit('modal:closed')
+      promise
+    else
+      u.resolvedPromise()
 
   autoclose = ->
     unless $('.up-modal').is('[up-sticky]')

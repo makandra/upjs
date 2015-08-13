@@ -12,6 +12,16 @@ If you use them in your own code, you will get hurt.
 ###
 up.util = (->
 
+  memoize = (func) ->
+    cache = undefined
+    cached = false
+    (args...) ->
+      if cached
+        cache
+      else
+        cached = true
+        cache = func(args...)
+
   get = (url, options) ->
     options = options or {}
     options.url = url
@@ -359,7 +369,23 @@ up.util = (->
     element = document.documentElement
     width: element.clientWidth
     height: element.clientHeight
-    
+
+  # This is how Bootstrap does it also:
+  # https://github.com/twbs/bootstrap/blob/c591227602996c542b9fd0cb65cff3cc9519bdd5/dist/js/bootstrap.js#L1187
+  scrollbarWidth = memoize ->
+    $outer = $('<div>').css
+      position:  'absolute'
+      top:       '0'
+      left:      '0'
+      width:     '50px'
+      height:    '50px'
+      overflowY: 'scroll'
+    $outer.appendTo(document.body)
+    outer = $outer.get(0)
+    width = outer.offsetWidth - outer.clientWidth
+    $outer.remove()
+    width
+
   temporaryCss = ($element, css, block) ->
     oldCss = $element.css(keys(css))
 #    debug("Stored old CSS", oldCss)
@@ -644,5 +670,6 @@ up.util = (->
   resolvableWhen: resolvableWhen
   setMissingAttrs: setMissingAttrs
   remove: remove
-
+  memoize: memoize
+  scrollbarWidth: scrollbarWidth
 )()

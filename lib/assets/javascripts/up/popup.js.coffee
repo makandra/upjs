@@ -182,6 +182,8 @@ up.popup = (->
       )
       currentSource = undefined
       up.destroy($popup, options)
+    else
+      u.resolvedPromise()
     
   autoclose = ->
     unless $('.up-popup').is('[up-sticky]')
