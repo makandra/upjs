@@ -39,8 +39,10 @@ up.modal = (->
   @method up.modal.defaults
   @param {Number} [options.width]
     The width of the dialog as a CSS value like `'400px'` or `50%`.
+
     Defaults to `undefined`, meaning that the dialog will grow to fit its contents
-    until it reaches `options.maxWidth`.
+    until it reaches `options.maxWidth`. Leaving this as `undefined` will
+    also allow you to control the width using CSS.
   @param {Number} [options.maxWidth]
     The width of the dialog as a CSS value like `'400px'` or `50%`.
     You can set this to `undefined` to make the dialog fit its contents.
