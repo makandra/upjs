@@ -23,7 +23,9 @@ $close-font-size: 34px
   overflow-x: hidden
   overflow-y: scroll
   // We prefer centering the dialog as an `inline-block`
-  // to giving it a horizontal margin of `auto`.
+  // to giving it a horizontal margin of `auto`. This way
+  // the width of `.up-modal-dialog` is controlled by the
+  // contents of `.up-modal-content`.
   text-align: center
 
 .up-modal-dialog
@@ -35,10 +37,10 @@ $close-font-size: 34px
   // the width and height attributes set by up.modal
   // should be honored exactly.
   box-sizing: border-box
-  // add block formatting context so we always see
-  // the vertical margin
-  // overflow: hidden
   margin: 30px 10px
+
+  // In case someone sets a huge width on the dialog.
+  max-width: 100%
 
   // Make it grow with the width of .up-modal-content
   display: inline-block
