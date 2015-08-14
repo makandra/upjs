@@ -16,8 +16,10 @@ up.modal = (->
   currentSource = undefined
 
   config =
-    width: 'auto'
-    height: 'auto'
+    maxWidth: undefined
+    minWidth: undefined
+    width: undefined
+    height: undefined
     openAnimation: 'fade-in'
     closeAnimation: 'fade-out'
     closeLabel: '×'
@@ -35,16 +37,23 @@ up.modal = (->
   Sets default options for future modals.
 
   @method up.modal.defaults
-  @param {Number} [options.width='auto']
-    The width of the dialog in pixels.
-    Defaults to `'auto'`, meaning that the dialog will grow to fit its contents.
+  @param {Number} [options.width]
+    The width of the dialog as a CSS value like `'400px'` or `50%`.
+    Defaults to `undefined`, meaning that the dialog will grow to fit its contents
+    until it reaches `options.maxWidth`.
+  @param {Number} [options.maxWidth]
+    The width of the dialog as a CSS value like `'400px'` or `50%`.
+    You can set this to `undefined` to make the dialog fit its contents.
+    Be aware however, that e.g. Bootstrap stretches input elements
+    to `width: 100%`, meaning the dialog will also stretch to the full
+    width of the screen.
   @param {Number} [options.height='auto']
     The height of the dialog in pixels.
-    Defaults to `'auto'`, meaning that the dialog will grow to fit its contents.
+    Defaults to `undefined`, meaning that the dialog will grow to fit its contents.
   @param {String|Function(config)} [options.template]
     A string containing the HTML structure of the modal.
     You can supply an alternative template string, but make sure that it
-    contains tags with the classes `up-modal`, `up-modal-dialog` and `up-modal-content`.
+    contains a containing tag with the class `up-modal`.
 
     You can also supply a function that returns a HTML string.
     The function will be called with the modal options (merged from these defaults
@@ -78,23 +87,24 @@ up.modal = (->
     $popup.removeAttr('up-previous-url')
     $popup.removeAttr('up-previous-title')
 
-  createHiddenModal = (selector, width, height, sticky) ->
+  createHiddenModal = (options) ->
     $modal = $(templateHtml())
-    $modal.attr('up-sticky', '') if sticky
+    $modal.attr('up-sticky', '') if options.sticky
     $modal.attr('up-previous-url', up.browser.url())
     $modal.attr('up-previous-title', document.title)
     $dialog = $modal.find('.up-modal-dialog')
-    $dialog.css('width', width) if u.isPresent(width)
-    $dialog.css('height', height) if u.isPresent(height)
-    $content = $dialog.find('.up-modal-content')
-    $placeholder = u.$createElementFromSelector(selector)
+    $dialog.css('width', options.width) if u.isPresent(options.width)
+    $dialog.css('max-width', options.maxWidth) if u.isPresent(options.maxWidth)
+    $dialog.css('height', options.height) if u.isPresent(options.height)
+    $content = $modal.find('.up-modal-content')
+    $placeholder = u.$createElementFromSelector(options.selector)
     $placeholder.appendTo($content)
     $modal.appendTo(document.body)
     rememberHistory()
     $modal.hide()
     $modal
 
-  unshiftBodyPadding = undefined
+  unshiftBody = undefined
 
   # Gives `<body>` a right padding in the width of a scrollbar.
   # This is to prevent the body from jumping when we add the
@@ -103,15 +113,10 @@ up.modal = (->
     scrollbarWidth = u.scrollbarWidth()
     bodyRightPadding = parseInt($('body').css('padding-right'))
     bodyRightShift = scrollbarWidth + bodyRightPadding
-    unshiftBodyPadding = u.temporaryCss($('body'),
-      paddingRight: "#{bodyRightShift}px",
-      overflowY: 'hidden'
+    unshiftBody = u.temporaryCss($('body'),
+      'padding-right': "#{bodyRightShift}px",
+      'overflow-y': 'hidden'
     )
-
-  # Restores `<body>` the right padding.
-  unshiftBody = ->
-    unshiftBodyPadding?()
-    unshiftBodyPadding = undefined
 
   updated = ($modal, animation, animateOptions) ->
     up.bus.emit('modal:open')
@@ -186,6 +191,7 @@ up.modal = (->
     url = u.option(options.url, $link.attr('up-href'), $link.attr('href'))
     selector = u.option(options.target, $link.attr('up-modal'), 'body')
     width = u.option(options.width, $link.attr('up-width'), config.width)
+    maxWidth = u.option(options.maxWidth, $link.attr('up-max-width'), config.maxWidth)
     height = u.option(options.height, $link.attr('up-height'), config.height)
     animation = u.option(options.animation, $link.attr('up-animation'), config.openAnimation)
     sticky = u.option(options.sticky, $link.is('[up-sticky]'))
@@ -193,7 +199,12 @@ up.modal = (->
     animateOptions = up.motion.animateOptions(options, $link)
 
     close()
-    $modal = createHiddenModal(selector, width, height, sticky)
+    $modal = createHiddenModal
+      selector: selector
+      width: width
+      maxWidth: maxWidth
+      height: height
+      sticky: sticky
 
     up.replace(selector, url,
       history: history

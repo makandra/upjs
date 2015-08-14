@@ -386,18 +386,30 @@ up.util = (->
     $outer.remove()
     width
 
+
+  ###*
+  Modifies the given function so it only runs once.
+  Subsequent calls will return the previous return value.
+
+  @method up.util.once
+  @private
+  ###
+  once = (fun) ->
+    result = undefined
+    ->
+      result = fun() if fun?
+      fun = undefined
+      result
+
   temporaryCss = ($element, css, block) ->
     oldCss = $element.css(keys(css))
-#    debug("Stored old CSS", oldCss)
     $element.css(css)
-    memo = ->
-#      debug("Restoring CSS %o on %o", oldCss, $element)
-      $element.css(oldCss)
+    memo = -> $element.css(oldCss)
     if block
       block()
       memo()
     else
-      memo
+      once(memo)
       
   forceCompositing = ($element) ->
     oldTransforms = $element.css(['transform', '-webkit-transform'])
