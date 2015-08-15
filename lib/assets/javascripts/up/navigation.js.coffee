@@ -25,6 +25,9 @@ up.navigation = (->
   config = u.config
     currentClass: 'up-current'
 
+  reset = ->
+    config.reset()
+
   currentClass = ->
     klass = config.currentClass
     unless u.contains(klass, 'up-current')
@@ -202,6 +205,9 @@ up.navigation = (->
     # once they close.
     if $fragment.is('.up-modal, .up-popup')
       locationChanged()
+
+  # The framework is reset between tests
+  up.bus.on 'framework:reset', reset
 
   defaults: config.update
 

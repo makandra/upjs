@@ -13,26 +13,6 @@ up.modal = (->
 
   u = up.util
 
-  currentSource = undefined
-
-  config =
-    maxWidth: undefined
-    minWidth: undefined
-    width: undefined
-    height: undefined
-    openAnimation: 'fade-in'
-    closeAnimation: 'fade-out'
-    closeLabel: '×'
-    template: (config) ->
-      """
-      <div class="up-modal">
-        <div class="up-modal-dialog">
-          <div class="up-modal-close" up-close>#{config.closeLabel}</div>
-          <div class="up-modal-content"></div>
-        </div>
-      </div>
-      """
-  
   ###*
   Sets default options for future modals.
 
@@ -69,9 +49,31 @@ up.modal = (->
     The animation used to close the modal. The animation will be applied
     to both the dialog box and the overlay dimming the page.
   ###
-  defaults = (options) ->
-    u.extend(config, options)
-    
+  config = u.config
+    maxWidth: undefined
+    minWidth: undefined
+    width: undefined
+    height: undefined
+    openAnimation: 'fade-in'
+    closeAnimation: 'fade-out'
+    closeLabel: '×'
+    template: (config) ->
+      """
+      <div class="up-modal">
+        <div class="up-modal-dialog">
+          <div class="up-modal-close" up-close>#{config.closeLabel}</div>
+          <div class="up-modal-content"></div>
+        </div>
+      </div>
+      """
+
+  currentSource = undefined
+
+  reset = ->
+    close()
+    currentSource = undefined
+    config.reset()
+
   templateHtml = ->
     template = config.template
     if u.isFunction(template)
@@ -377,14 +379,13 @@ up.modal = (->
       close()
   )
 
-  # The framework is reset between tests, so also close
-  # a currently open modal dialog.
-  up.bus.on 'framework:reset', close
+  # The framework is reset between tests
+  up.bus.on 'framework:reset', reset
 
   open: open
   close: close
   source: source
-  defaults: defaults
+  defaults: config.update
   contains: contains
 
 )()

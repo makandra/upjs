@@ -11,24 +11,7 @@ we can't currently get rid off.
 up.browser = (->
   
   u = up.util
-  
-#  safari = false
-#  
-#  detect = ->
-#    agent = navigator.userAgent
-#    agentHas = (substring) -> agent.indexOf(substring) >= 1
-#    safari = agentHas('Safari') && !agentHas('Chrome')
-#    
-#  transitionEndEvent = ->
-#    if safari
-#      'webkitTransitionEnd'
-#    else
-#      'transitionend'
-#
-#  detect()
-#  
-#  transitionEndEvent: transitionEndEvent
-  
+
   loadPage = (url, options = {}) ->
     method = u.option(options.method, 'get').toLowerCase()
     if method == 'get'

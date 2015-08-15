@@ -27,19 +27,20 @@ up.popup = (->
 
   currentSource = undefined
 
-  config =
-    openAnimation: 'fade-in'
-    closeAnimation: 'fade-out'
-    position: 'bottom-right'
-
   ###*
   @method up.popup.defaults
   @param {String} options.animation
   @param {String} options.position
   ###
-  defaults = (options) ->
-    u.extend(config, options)
-  
+  config = u.config
+    openAnimation: 'fade-in'
+    closeAnimation: 'fade-out'
+    position: 'bottom-right'
+
+  reset = ->
+    close()
+    config.reset()
+
   setPosition = ($link, $popup, position) ->
     linkBox = u.measure($link, full: true)
     css = switch position
@@ -257,14 +258,13 @@ up.popup = (->
       close()
   )
 
-  # The framework is reset between tests, so also close
-  # a currently open popup.
-  up.bus.on 'framework:reset', close
+  # The framework is reset between tests
+  up.bus.on 'framework:reset', reset
 
   open: open
   close: close
   source: source
-  defaults: defaults
+  defaults: config.update
   contains: contains
   
 )()
