@@ -347,7 +347,15 @@ up.util = (->
 
   compact = (array) ->
     select array, isGiven
-    
+
+  uniq = (array) ->
+    seen = {}
+    select array, (element) ->
+      if seen.hasOwnProperty(element)
+        false
+      else
+        seen[element] = true
+
   select = (array, tester) ->
     matches = []
     each array, (element) ->
@@ -550,8 +558,8 @@ up.util = (->
   escapePressed = (event) ->
     event.keyCode == 27
     
-  contains = (array, element) ->
-    array.indexOf(element) >= 0
+  contains = (stringOrArray, element) ->
+    stringOrArray.indexOf(element) >= 0
 
   castsToTrue = (object) ->
     String(object) == "true"
@@ -612,6 +620,19 @@ up.util = (->
       array.splice(index, 1)
       element
 
+  config = (factoryOptions = {}) ->
+    hash =
+      reset: ->
+        ownKeys = Object.getOwnPropertyNames(hash)
+        for key in ownKeys
+          delete hash[key] unless contains(apiKeys, key)
+        hash.update copy(factoryOptions)
+      update: (options) ->
+        extend(hash, options)
+    apiKeys = Object.getOwnPropertyNames(hash)
+    hash.reset()
+    hash
+
   presentAttr: presentAttr
   createElement: createElement
   normalizeUrl: normalizeUrl
@@ -634,6 +655,7 @@ up.util = (->
   detect: detect
   select: select
   compact: compact
+  uniq: uniq
   last: last
   isNull: isNull
   isDefined: isDefined
@@ -684,4 +706,6 @@ up.util = (->
   remove: remove
   memoize: memoize
   scrollbarWidth: scrollbarWidth
+  config: config
+
 )()
