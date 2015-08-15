@@ -35,7 +35,7 @@ up.modal = (->
   @param {String|Function(config)} [options.template]
     A string containing the HTML structure of the modal.
     You can supply an alternative template string, but make sure that it
-    contains a containing tag with the class `up-modal`.
+    defines tag with the classes `up-modal`, `up-modal-dialog` and  `up-modal-content`.
 
     You can also supply a function that returns a HTML string.
     The function will be called with the modal options (merged from these defaults

@@ -18,9 +18,9 @@ up.navigation = (->
   ###*
   Sets default options for this module.
 
+  @method up.navigation.defaults
   @param {Number} [options.currentClass]
     The class to set on [links that point the current location](#up-current).
-  @method up.navigation.defaults
   ###
   config = u.config
     currentClass: 'up-current'
