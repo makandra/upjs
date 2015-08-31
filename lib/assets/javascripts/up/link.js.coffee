@@ -152,6 +152,7 @@ up.link = (->
     options.history = u.option(options.history, $link.attr('up-history'))
     options.scroll = u.option(options.scroll, $link.attr('up-scroll'), 'body')
     options.cache = u.option(options.cache, $link.attr('up-cache'))
+    options.restoreScroll = u.option(options.restoreScroll, $link.attr('up-restore-scroll'))
     options.method = followMethod($link, options)
     options = u.merge(options, up.motion.animateOptions(options, $link))
 

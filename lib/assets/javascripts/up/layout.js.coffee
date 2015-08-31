@@ -73,35 +73,35 @@ up.layout = (->
     A promise that will be resolved when the scrolling ends.
   ###
   scroll = (viewport, scrollTop, options) ->
-    $view = $(viewport)
+    $viewport = $(viewport)
     options = u.options(options)
     duration = u.option(options.duration, config.duration)
     easing = u.option(options.easing, config.easing)
 
-    finishScrolling($view)
+    finishScrolling($viewport)
 
     if duration > 0
       deferred = $.Deferred()
 
-      $view.data(SCROLL_PROMISE_KEY, deferred)
+      $viewport.data(SCROLL_PROMISE_KEY, deferred)
       deferred.then ->
-        $view.removeData(SCROLL_PROMISE_KEY)
+        $viewport.removeData(SCROLL_PROMISE_KEY)
         # Since we're scrolling using #animate, #finish can be
         # used to jump to the last frame:
         # https://api.jquery.com/finish/
-        $view.finish()
+        $viewport.finish()
 
       targetProps =
         scrollTop: scrollTop
 
-      $view.animate targetProps,
+      $viewport.animate targetProps,
         duration: duration,
         easing: easing,
         complete: -> deferred.resolve()
 
       deferred
     else
-      $view.scrollTop(scrollTop)
+      $viewport.scrollTop(scrollTop)
       u.resolvedDeferred()
 
   ###*
@@ -171,7 +171,7 @@ up.layout = (->
   reveal = (elementOrSelector, options) ->
     options = u.options(options)
     $element = $(elementOrSelector)
-    $viewport = findViewport($element, options.viewport)
+    $viewport = viewportOf($element, options.viewport)
 
     snap = u.option(options.snap, config.snap)
 
@@ -220,22 +220,59 @@ up.layout = (->
     else
       u.resolvedDeferred()
 
+  viewportSelector = ->
+    config.viewports.join(', ')
+
   ###*
-  @private
-  @method up.viewport.findViewport
+  Returns the viewport for the given element.
+
+  Throws an error if no viewport could be found.
+
+  @protected
+  @method up.layout.viewportOf
+  @param {String|Element|jQuery} selectorOrElement
   ###
-  findViewport = ($element, viewportSelectorOrElement) ->
+  viewportOf = (selectorOrElement, viewportSelectorOrElement) ->
+    $element = $(selectorOrElement)
     $viewport = undefined
     # If someone has handed as a jQuery element, that's the
     # view period.
     if u.isJQuery(viewportSelectorOrElement)
       $viewport = viewportSelectorOrElement
     else
-      vieportSelector = u.presence(viewportSelectorOrElement) || config.viewports.join(', ')
+      vieportSelector = u.presence(viewportSelectorOrElement) || viewportSelector()
       $viewport = $element.closest(vieportSelector)
 
     $viewport.length or u.error("Could not find viewport for %o", $element)
     $viewport
+
+  ###*
+  @protected
+  @method up.layout.viewportsIn
+  @param {String|Element|jQuery} selectorOrElement
+  ###
+  viewportsIn = (selectorOrElement) ->
+    $element = $(selectorOrElement)
+    u.findWithSelf($element, viewportSelector())
+
+  ###*
+  @protected
+  @method up.layout.viewports
+  ###
+  viewports = ->
+    $(viewportSelector())
+
+  ###*
+  @protected
+  @method up.layout.scrollTops
+  ###
+  scrollTops = ->
+    topsBySelector = {}
+    for viewport in config.viewports
+      $viewport = $(viewport)
+      if $viewport.length
+        topsBySelector[viewport] = $viewport.scrollTop()
+    topsBySelector
 
   ###*
   Marks this element as a scrolling container. Apply this ttribute if your app uses
@@ -323,6 +360,10 @@ up.layout = (->
   scroll: scroll
   finishScrolling: finishScrolling
   defaults: config.update
+  viewportOf: viewportOf
+  viewportsIn: viewportsIn
+  viewports: viewports
+  scrollTops: scrollTops
 
 )()
 

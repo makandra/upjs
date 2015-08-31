@@ -16,15 +16,24 @@ up.history = (->
   
   u = up.util
 
+  lastScrollTops = {}
+
   ###*
   @method up.history.defaults
-  @param [options.popTarget]
+  @param [options.popTarget=`'body'`]
+    Which container to replace when the user goes
+    back in history.
+  @param [options.restoreScroll=`true`]
+    Whether to restore the known scroll positions
+    when the user goes back in history.
   ###
   config = u.config
     popTarget: 'body'
+    restoreScroll: true
 
   reset = ->
     config.reset()
+    lastScrollTops = {}
   
   isCurrentUrl = (url) ->
     u.normalizeUrl(url, hash: true) == u.normalizeUrl(up.browser.url(), hash: true)
@@ -48,18 +57,56 @@ up.history = (->
   push = (url) ->
     manipulate("push", url) unless isCurrentUrl(url)
 
+  ###*
+  @private
+  ###
   manipulate = (method, url) ->
     if up.browser.canPushState()
       method += "State" # resulting in either pushState or replaceState
-      window.history[method]({ fromUp: true }, '', url)
+      state = buildState()
+      lastScrollTops[u.normalizeUrl(url)] = state.scrollTops
+      window.history[method](state, '', url)
     else
       u.error "This browser doesn't support history.pushState"
+
+  ###*
+  Restores the top scroll positions of all the
+  viewports configured in `up.layout.defaults('viewports')`.
+
+  @method up.history.restoreScroll()
+  @protected
+  ###
+  restoreScroll = (options = {}) ->
+    # If we aren't given a hash of selector => scrollTop,
+    # try to find the last scroll positions that we saved for
+    # the current URL
+    unless options.tops
+      url = u.normalizeUrl(up.browser.url())
+      options.tops = lastScrollTops[url] || {}
+
+    $viewports = if options.within
+      up.layout.viewportsIn(options.within)
+    else
+      up.layout.viewports()
+
+    for selector, scrollTop of options.tops
+      $matchingViewport = $viewports.filter(selector)
+      up.scroll($matchingViewport, scrollTop, duration: 0)
+
+  buildState = ->
+    fromUp: true
+    scrollTops: up.layout.scrollTops()
+
+  restoreStateOnPop = (state) ->
+    url = up.browser.url()
+    u.debug "Restoring state %o (now on #{url})", state
+    up.replace(config.popTarget, url, historyMethod: 'replace').then ->
+      restoreScroll(tops: state.scrollTops) if config.restoreScroll
 
   pop = (event) ->
     state = event.originalEvent.state
     if state?.fromUp
-      u.debug "Restoring state %o (now on #{up.browser.url()})", state
-      up.replace config.popTarget, up.browser.url(), historyMethod: 'replace'
+      restoreStateOnPop(state)
     else
       u.debug 'Discarding unknown state %o', state
 
@@ -82,5 +129,6 @@ up.history = (->
   defaults: config.update
   push: push
   replace: replace
+  restoreScroll: restoreScroll
 
 )()

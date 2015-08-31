@@ -53,6 +53,11 @@ up.flow = (->
     scrolling its containing viewport. Set this option to `false` to prevent any scrolling.
 
     If omitted, this will use the [default from `up.layout`](/up.layout#up.layout.defaults).
+  @param {Boolean} [options.restoreScroll=`false`]
+    If set to true, Up.js will try to restore the scroll position
+    of all the viewports within the updated element. The position
+    will be reset to the last known top position before a previous
+    history change for the current URL.
   @param {Boolean} [options.cache]
     Whether to use a [cached response](/up.proxy) if available.
   @param {String} [options.historyMethod='push']
@@ -118,12 +123,8 @@ up.flow = (->
   @protected
   @param {String} selector
   @param {String} html
-  @param {String} [options.title]
-  @param {String} [options.source]
-  @param {Object} [options.transition]
-  @param {String} [options.scroll='body']
-  @param {String} [options.history]
-  @param {String} [options.historyMethod='push']
+  @param {Object} [options]
+    See options for [`up.replace`](#up.replace).
   ###
   implant = (selector, html, options) ->
     
@@ -185,6 +186,8 @@ up.flow = (->
     # Remember where the element came from so we can
     # offer reload functionality.
     setSource($new, options.source)
+    if options.restoreScroll
+      up.history.restoreScroll(within: $new)
     autofocus($new)
     # The fragment should be readiet before animating,
     # so transitions see .up-current classes

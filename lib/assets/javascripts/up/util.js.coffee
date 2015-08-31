@@ -620,18 +620,24 @@ up.util = (->
 
   config = (factoryOptions = {}) ->
     hash =
+      ensureKeyExists: (key) ->
+        factoryOptions.hasOwnProperty(key) or error("Unknown setting %o", key)
       reset: ->
         ownKeys = copy(Object.getOwnPropertyNames(hash))
         for key in ownKeys
           delete hash[key] unless contains(apiKeys, key)
         hash.update copy(factoryOptions)
-      update: (options = {}) ->
-        for key, value of options
-          if factoryOptions.hasOwnProperty(key)
-            hash[key] = value
+      update: (options) ->
+        if options
+          if isString(options)
+            hash.ensureKeyExists(options)
+            hash[options]
           else
-            error("Unknown setting %o", key)
-        hash
+            for key, value of options
+              hash.ensureKeyExists(key)
+              hash[key] = value
+        else
+          hash
     apiKeys = Object.getOwnPropertyNames(hash)
     hash.reset()
     hash
