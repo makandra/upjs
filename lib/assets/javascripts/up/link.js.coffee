@@ -132,9 +132,8 @@ up.link = (->
     or to `body` if such an attribute does not exist.
   @param {Function|String} [options.transition]
     A transition function or name.
-  @param {Element|jQuery|String} [options.scroll]
-    An element or selector that will be scrolled to the top in
-    case the replaced element is not visible in the viewport.
+  @param {Element|jQuery|String} [options.reveal]
+    Whether to reveal the followed element within its viewport.
   @param {Number} [options.duration]
     The duration of the transition. See [`up.morph`](/up.motion#up.morph).
   @param {Number} [options.delay]
@@ -150,7 +149,7 @@ up.link = (->
     selector = u.option(options.target, $link.attr('up-target'), 'body')
     options.transition = u.option(options.transition, $link.attr('up-transition'), $link.attr('up-animation')) 
     options.history = u.option(options.history, $link.attr('up-history'))
-    options.scroll = u.option(options.scroll, $link.attr('up-scroll'), 'body')
+    options.reveal = u.option(options.reveal, $link.attr('up-reveal'))
     options.cache = u.option(options.cache, $link.attr('up-cache'))
     options.restoreScroll = u.option(options.restoreScroll, $link.attr('up-restore-scroll'))
     options.method = followMethod($link, options)

@@ -126,14 +126,14 @@ describe 'up.flow', ->
             @request = up.replace('.middle', '/path')
             @respond()
             @request.then =>
-              expect(up.reveal).toHaveBeenCalledWith(@oldMiddle, jasmine.any(Object))
+              expect(up.reveal).toHaveBeenCalledWith(@oldMiddle)
               done()
 
           it 'reveals a new element that is being appended', (done) ->
             @request = up.replace('.middle:after', '/path')
             @respond()
             @request.then =>
-              expect(up.reveal).not.toHaveBeenCalledWith(@oldMiddle, jasmine.any(Object))
+              expect(up.reveal).not.toHaveBeenCalledWith(@oldMiddle)
               # Text nodes are wrapped in a .up-insertion container so we can
               # animate them and measure their position/size for scrolling.
               # This is not possible for container-less text nodes.
@@ -146,7 +146,7 @@ describe 'up.flow', ->
             @request = up.replace('.middle:before', '/path')
             @respond()
             @request.then =>
-              expect(up.reveal).not.toHaveBeenCalledWith(@oldMiddle, jasmine.any(Object))
+              expect(up.reveal).not.toHaveBeenCalledWith(@oldMiddle)
               # Text nodes are wrapped in a .up-insertion container so we can
               # animate them and measure their position/size for scrolling.
               # This is not possible for container-less text nodes.
