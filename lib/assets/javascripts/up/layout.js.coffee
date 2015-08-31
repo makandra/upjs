@@ -11,15 +11,28 @@ up.layout = (->
   u = up.util
 
   ###*
-
+  Configures the application layout.
 
   @method up.layout.defaults
   @param {Array<String>} [options.viewports]
+    An array of CSS selectors that find viewports
+    (containers that scroll their contents).
   @param {Array<String>} [options.fixedTop]
+    An array of CSS selectors that find elements fixed to the
+    top edge of the screen (using `position: fixed`).
   @param {Array<String>} [options.fixedBottom]
+    An array of CSS selectors that find elements fixed to the
+    bottom edge of the screen (using `position: fixed`).
   @param {Number} [options.duration]
+    The duration of the scrolling animation in milliseconds.
+    Setting this to `0` will disable scrolling animations.
   @param {String} [options.easing]
+    The timing function that controls the animation's acceleration.
+    See [W3C documentation](http://www.w3.org/TR/css3-transitions/#transition-timing-function)
+    for a list of pre-defined timing functions.
   @param {Number} [options.snap]
+    When [revealing](#up.reveal) elements, Up.js will scroll an viewport
+    to the top when the revealed element is closer to the top than `options.snap`.
   ###
   config = u.config
     duration: 0
@@ -247,15 +260,21 @@ up.layout = (->
     $viewport
 
   ###*
+  Returns a jQuery collection of all the viewports contained within the
+  given selector or element.
+
   @protected
   @method up.layout.viewportsIn
   @param {String|Element|jQuery} selectorOrElement
+  @return jQuery
   ###
   viewportsIn = (selectorOrElement) ->
     $element = $(selectorOrElement)
     u.findWithSelf($element, viewportSelector())
 
   ###*
+  Returns a jQuery collection of all the viewports on the screen.
+
   @protected
   @method up.layout.viewports
   ###
@@ -263,8 +282,17 @@ up.layout = (->
     $(viewportSelector())
 
   ###*
+  Returns a hash with scroll positions.
+
+  Each key in the hash is a viewport selector. The corresponding
+  value is the viewport's top scroll position:
+
+      up.layout.scrollTops()
+      => { '.main': 0, '.sidebar': 73 }
+
   @protected
   @method up.layout.scrollTops
+  @return Object<String, Number>
   ###
   scrollTops = ->
     topsBySelector = {}
