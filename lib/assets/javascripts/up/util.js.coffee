@@ -265,7 +265,10 @@ up.util = (->
 
   isString = (object) ->
     typeof(object) == 'string'
-    
+
+  isNumber = (object) ->
+    typeof(object) == 'number'
+
   isHash = (object) ->
     typeof(object) == 'object' && !!object
 
@@ -618,6 +621,93 @@ up.util = (->
       array.splice(index, 1)
       element
 
+  cache = (config) ->
+
+    store = undefined
+
+    clear = ->
+      store = {}
+
+    clear()
+
+    maxSize = ->
+      if isFunction(config.size)
+        config.size()
+      else if isNumber(config.size)
+        config.size
+      else
+        error("Invalid size config: %o", config.size)
+
+    expiryMilis = ->
+      if isFunction(config.expiry)
+        config.expiry()
+      else if isNumber(config.expiry)
+        config.expiry
+      else
+        error("Invalid expiry config: %o", config.expiry)
+
+    normalizeStoreKey = (key) ->
+      if config.key
+        config.key(key)
+      else
+        key.toString()
+
+    trim = ->
+      storeKeys = copy(keys(store))
+      if storeKeys.length > maxSize()
+        oldestKey = null
+        oldestTimestamp = null
+        each storeKeys, (key) ->
+          promise = store[key] # we don't need to call cacheKey here
+          timestamp = promise.timestamp
+          if !oldestTimestamp || oldestTimestamp > timestamp
+            oldestKey = key
+            oldestTimestamp = timestamp
+        delete store[oldestKey] if oldestKey
+
+    alias = (oldKey, newKey) ->
+      value = get(oldKey)
+      if isDefined(value)
+        set(newKey, value)
+
+    timestamp = ->
+      (new Date()).valueOf()
+
+    set = (key, value) ->
+      storeKey = normalizeStoreKey(key)
+      store[storeKey] =
+        timestamp: timestamp()
+        value: value
+
+    remove = (key) ->
+      storeKey = normalizeStoreKey(key)
+      delete store[storeKey]
+
+    isFresh = (entry) ->
+      timeSinceTouch = timestamp() - entry.timestamp
+      timeSinceTouch < expiryMilis()
+
+    get = (key) ->
+      storeKey = normalizeStoreKey(key)
+      if entry = store[storeKey]
+        if !isFresh(entry)
+          debug("Discarding stale cache entry for %o", key)
+          remove(key)
+          undefined
+        else
+          debug("Cache hit for %o", key)
+          entry.value
+      else
+        debug("Cache miss for %o", key)
+        undefined
+
+    alias: alias
+    get: get
+    set: set
+    remove: remove
+    clear: clear
+
+
   config = (factoryOptions = {}) ->
     hash =
       ensureKeyExists: (key) ->
@@ -727,6 +817,7 @@ up.util = (->
   memoize: memoize
   scrollbarWidth: scrollbarWidth
   config: config
+  cache: cache
   unwrapElement: unwrapElement
 
 )()
