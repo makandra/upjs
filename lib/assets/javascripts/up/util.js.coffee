@@ -631,7 +631,9 @@ up.util = (->
     clear()
 
     maxSize = ->
-      if isFunction(config.size)
+      if isMissing(config.size)
+        undefined
+      else if isFunction(config.size)
         config.size()
       else if isNumber(config.size)
         config.size
@@ -639,7 +641,9 @@ up.util = (->
         error("Invalid size config: %o", config.size)
 
     expiryMilis = ->
-      if isFunction(config.expiry)
+      if isMissing(config.expiry)
+        undefined
+      else if isFunction(config.expiry)
         config.expiry()
       else if isNumber(config.expiry)
         config.expiry
@@ -654,7 +658,8 @@ up.util = (->
 
     trim = ->
       storeKeys = copy(keys(store))
-      if storeKeys.length > maxSize()
+      size = maxSize()
+      if size && storeKeys.length > size
         oldestKey = null
         oldestTimestamp = null
         each storeKeys, (key) ->
@@ -684,22 +689,26 @@ up.util = (->
       delete store[storeKey]
 
     isFresh = (entry) ->
-      timeSinceTouch = timestamp() - entry.timestamp
-      timeSinceTouch < expiryMilis()
+      expiry = expiryMilis()
+      if expiry
+        timeSinceTouch = timestamp() - entry.timestamp
+        timeSinceTouch < expiryMilis()
+      else
+        true
 
-    get = (key) ->
+    get = (key, fallback = undefined) ->
       storeKey = normalizeStoreKey(key)
       if entry = store[storeKey]
         if !isFresh(entry)
           debug("Discarding stale cache entry for %o", key)
           remove(key)
-          undefined
+          fallback
         else
           debug("Cache hit for %o", key)
           entry.value
       else
         debug("Cache miss for %o", key)
-        undefined
+        fallback
 
     alias: alias
     get: get

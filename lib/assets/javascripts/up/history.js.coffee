@@ -16,7 +16,7 @@ up.history = (->
   
   u = up.util
 
-  lastScrollTops = {}
+  lastScrollTops = u.cache(size: 30)
 
   ###*
   @method up.history.defaults
@@ -33,7 +33,7 @@ up.history = (->
 
   reset = ->
     config.reset()
-    lastScrollTops = {}
+    lastScrollTops.clear()
   
   isCurrentUrl = (url) ->
     u.normalizeUrl(url, hash: true) == u.normalizeUrl(up.browser.url(), hash: true)
@@ -64,7 +64,7 @@ up.history = (->
     if up.browser.canPushState()
       method += "State" # resulting in either pushState or replaceState
       state = buildState()
-      lastScrollTops[u.normalizeUrl(url)] = state.scrollTops
+      lastScrollTops.set(u.normalizeUrl(url), state.scrollTops)
       window.history[method](state, '', url)
     else
       u.error "This browser doesn't support history.pushState"
@@ -82,7 +82,7 @@ up.history = (->
     # the current URL
     unless options.tops
       url = u.normalizeUrl(up.browser.url())
-      options.tops = lastScrollTops[url] || {}
+      options.tops = lastScrollTops.get(url, {})
 
     $viewports = if options.within
       up.layout.viewportsIn(options.within)
