@@ -35,19 +35,18 @@ describe 'up.history', ->
       up.history.defaults(popTargets: ['.viewport'])
 
       $viewport.append(longContentHtml)
-      $viewport.scrollTop(50)
 
-      expect($('.viewport').scrollTop()).toBe(50)
+      up.replace('.content', '/one')
+      respond()
+      $viewport.scrollTop(50)
 
       up.replace('.content', '/two')
       respond()
       $('.viewport').scrollTop(150)
-      expect($('.viewport').scrollTop()).toBe(150)
 
       up.replace('.content', '/three')
       respond()
       $('.viewport').scrollTop(250)
-      expect($('.viewport').scrollTop()).toBe(250)
 
       history.back()
       @setTimer 50, =>
@@ -56,20 +55,17 @@ describe 'up.history', ->
 
         history.back()
         @setTimer 50, =>
-          respond() # we need to respond since we've never requested the original URL with the popTarget
-          console.log("[spec] url is now %o", up.browser.url())
+          respond() # we need to respond since we've never requested /one with the popTarget
           expect($('.viewport').scrollTop()).toBe(50)
 
           history.forward()
           @setTimer 50, =>
             # No need to respond since we requested /two with the popTarget
             # when we went backwards
-            console.log("[spec] url is now %o", up.browser.url())
             expect($('.viewport').scrollTop()).toBe(150)
 
             history.forward()
             @setTimer 50, =>
               respond() # we need to respond since we've never requested /three with the popTarget
-              console.log("[spec] url is now %o", up.browser.url())
               expect($('.viewport').scrollTop()).toBe(250)
               done()
