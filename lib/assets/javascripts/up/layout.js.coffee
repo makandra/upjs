@@ -42,8 +42,13 @@ up.layout = (->
     snap: 50
     easing: 'swing'
 
+  lastScrollTops = u.cache
+    size: 30,
+    key: up.history.normalizeUrl
+
   reset = ->
     config.reset()
+    lastScrollTops.clear()
 
   SCROLL_PROMISE_KEY = 'up-scroll-promise'
 
@@ -303,6 +308,47 @@ up.layout = (->
     topsBySelector
 
   ###*
+  Saves the top scroll positions of all the
+  viewports configured in `up.layout.defaults('viewports').
+  The saved scroll positions can be restored by calling
+  [`up.layout.restoreScroll()`](#up.layout.restoreScroll).
+
+  @method up.layout.saveScroll
+  @param {String} [options.url]
+  @param {Object<String, Number>} [options.tops]
+  @protected
+  ###
+  saveScroll = (options = {}) ->
+    url = u.option(options.url, up.history.url())
+    tops = u.option(options.tops, scrollTops())
+    console.log("[saveScroll] tops for %o are %o", url, tops)
+    lastScrollTops.set(url, tops)
+
+  ###*
+  Restores the top scroll positions of all the
+  viewports configured in `up.layout.defaults('viewports')`.
+
+  @method up.layout.restoreScroll
+  @param {String} [options.within]
+  @protected
+  ###
+  restoreScroll = (options = {}) ->
+
+    $viewports = if options.within
+      viewportsIn(options.within)
+    else
+      viewports()
+
+    tops = lastScrollTops.get(up.history.url())
+    console.log("[restoreScroll] retrieved tops for %o are %o", up.history.url(), tops)
+
+    for selector, scrollTop of tops
+      $matchingViewport = $viewports.filter(selector)
+      console.log("[restoreScroll] scrolling %o to %o", $matchingViewport, scrollTop)
+      up.scroll($matchingViewport, scrollTop, duration: 0)
+      console.log("[restoreScroll] scrollTop of %o is now %o", $matchingViewport, scrollTop)
+
+  ###*
   Marks this element as a scrolling container. Apply this ttribute if your app uses
   a custom panel layout with fixed positioning instead of scrolling `<body>`.
 
@@ -392,6 +438,8 @@ up.layout = (->
   viewportsIn: viewportsIn
   viewports: viewports
   scrollTops: scrollTops
+  saveScroll: saveScroll
+  restoreScroll: restoreScroll
 
 )()
 

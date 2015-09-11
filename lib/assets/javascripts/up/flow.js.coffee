@@ -144,7 +144,7 @@ up.flow = (->
     response = parseResponse(html)
     options.title ||= response.title()
 
-    up.history.saveScroll() unless options.saveScroll == false
+    up.layout.saveScroll() unless options.saveScroll == false
 
     for step in parseImplantSteps(selector, options)
       $old = findOldFragment(step.selector)
@@ -189,8 +189,7 @@ up.flow = (->
     # Remember where the element came from so we can
     # offer reload functionality.
     setSource($new, options.source)
-    if options.restoreScroll
-      up.history.restoreScroll(within: $new)
+    up.layout.restoreScroll(within: $new) if options.restoreScroll
     autofocus($new)
     # The fragment should be readiet before animating,
     # so transitions see .up-current classes

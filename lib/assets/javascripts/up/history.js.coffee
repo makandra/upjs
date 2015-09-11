@@ -16,25 +16,6 @@ up.history = (->
   
   u = up.util
 
-#  urlTracker = ->
-#    previousUrl = undefined
-#    nextPreviousUrl = undefined
-#
-#    reset = ->
-#      previousUrl = undefined
-#      nextPreviousUrl = undefined
-#
-#    observeNewUrl = (url) ->
-#      if nextPreviousUrl
-#        previousUrl = nextPreviousUrl
-#        nextPreviousUrl = undefined
-#      nextPreviousUrl = url
-#
-#    reset: reset
-#    previousUrl: -> previousUrl()
-#    observeNewUrl: observeNewUrl
-
-
   ###*
   @method up.history.defaults
   @param {Array<String>} [options.popTarget=`'body'`]
@@ -42,7 +23,7 @@ up.history = (->
     back in history.
   @param {Boolean} [options.restoreScroll=`true`]
     Whether to restore the known scroll positions
-    when the user goes back in history.
+    when the user goes back or forward in history.
   ###
   config = u.config
     popTargets: ['body']
@@ -53,7 +34,6 @@ up.history = (->
 
   reset = ->
     config.reset()
-    lastScrollTops.clear()
     previousUrl = undefined
     nextPreviousUrl = undefined
 
@@ -65,8 +45,6 @@ up.history = (->
   
   isCurrentUrl = (url) ->
     normalizeUrl(url) == currentUrl()
-
-  lastScrollTops = u.cache(size: 30, key: normalizeUrl)
 
   observeNewUrl = (url) ->
     if nextPreviousUrl
@@ -106,36 +84,6 @@ up.history = (->
     else
       u.error "This browser doesn't support history.pushState"
 
-  saveScroll = (options = {}) ->
-    url = u.option(options.url, currentUrl())
-    tops = up.layout.scrollTops()
-    console.log("[saveScroll] tops for %o are %o", url, tops)
-    lastScrollTops.set(url, tops)
-
-  ###*
-  Restores the top scroll positions of all the
-  viewports configured in `up.layout.defaults('viewports')`.
-
-  @method up.history.restoreScroll()
-  @param {String} [options.within]
-  @protected
-  ###
-  restoreScroll = (options = {}) ->
-
-    $viewports = if options.within
-      up.layout.viewportsIn(options.within)
-    else
-      up.layout.viewports()
-
-    tops = lastScrollTops.get(currentUrl())
-    console.log("[restoreScroll] retrieved tops for %o are %o", currentUrl(), tops)
-
-    for selector, scrollTop of tops
-      $matchingViewport = $viewports.filter(selector)
-      console.log("[restoreScroll] scrolling %o to %o", $matchingViewport, scrollTop)
-      up.scroll($matchingViewport, scrollTop, duration: 0)
-      console.log("[restoreScroll] scrollTop of %o is now %o", $matchingViewport, scrollTop)
-
   buildState = ->
     fromUp: true
 
@@ -153,7 +101,7 @@ up.history = (->
   pop = (event) ->
     console.log("[pop] pop to url %o", currentUrl())
     observeNewUrl(currentUrl())
-    saveScroll(url: previousUrl)
+    up.layout.saveScroll(url: previousUrl)
     state = event.originalEvent.state
     if state?.fromUp
       restoreStateOnPop(state)
@@ -180,7 +128,7 @@ up.history = (->
   defaults: config.update
   push: push
   replace: replace
-  saveScroll: saveScroll
-  restoreScroll: restoreScroll
+  url: currentUrl
+  normalizeUrl: normalizeUrl
 
 )()
