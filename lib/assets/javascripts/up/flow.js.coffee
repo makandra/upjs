@@ -66,6 +66,8 @@ up.flow = (->
   ###
   replace = (selectorOrElement, url, options) ->
 
+    console.log("[replace] from URL %o", url)
+
     options = u.options(options)
     
     selector = if u.presence(selectorOrElement)
@@ -141,6 +143,8 @@ up.flow = (->
     options.source = u.option(options.source, options.history)
     response = parseResponse(html)
     options.title ||= response.title()
+
+    up.history.saveScroll() unless options.saveScroll == false
 
     for step in parseImplantSteps(selector, options)
       $old = findOldFragment(step.selector)

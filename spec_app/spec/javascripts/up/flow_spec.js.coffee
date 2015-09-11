@@ -22,7 +22,7 @@ describe 'up.flow', ->
             """
 
           @respond = ->
-            jasmine.Ajax.requests.mostRecent().respondWith
+            @lastRequest().respondWith
               status: 200
               contentType: 'text/html'
               responseText: @responseText
@@ -253,7 +253,7 @@ describe 'up.flow', ->
             expect($('.element')).toHaveText('new text')
             done()
             
-          request = jasmine.Ajax.requests.mostRecent()
+          request = @lastRequest()
           expect(request.url).toMatch(/\/source$/)
     
           request.respondWith
