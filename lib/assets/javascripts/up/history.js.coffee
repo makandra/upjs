@@ -143,9 +143,12 @@ up.history = (->
     url = currentUrl()
     u.debug "Restoring state %o (now on #{url})", state
     popSelector = config.popTargets.join(', ')
-    up.replace(popSelector, url, history: false, reveal: false, transition: 'none', saveScroll: false).then ->
-      console.log("restoreState / replace promise resolved")
-      restoreScroll(within: popSelector) if config.restoreScroll
+    up.replace popSelector, url,
+      history: false,
+      reveal: false,
+      transition: 'none',
+      saveScroll: false
+      restoreScroll: config.restoreScroll
 
   pop = (event) ->
     console.log("[pop] pop to url %o", currentUrl())
