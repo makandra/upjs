@@ -23,7 +23,8 @@ describe 'up.history', ->
         console.log("url is now %o, previous was %o", up.history.url(), up.history.previousUrl())
         expect($element.attr('href')).toEndWith('/three')
         expect($element.attr('up-href')).toEndWith('/one')
-        expect($element.attr('up-restore-scroll')).toBe('true')
+        expect($element.attr('up-restore-scroll')).toBe('')
+        expect($element.attr('up-follow')).toBe('')
 
       it 'does not overwrite an existing up-href or up-restore-scroll attribute'
 

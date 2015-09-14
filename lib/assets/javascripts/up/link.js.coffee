@@ -147,11 +147,11 @@ up.link = (->
     options = u.options(options)
     url = u.option($link.attr('up-href'), $link.attr('href'))
     selector = u.option(options.target, $link.attr('up-target'), 'body')
-    options.transition = u.option(options.transition, $link.attr('up-transition'), $link.attr('up-animation')) 
-    options.history = u.option(options.history, $link.attr('up-history'))
-    options.reveal = u.option(options.reveal, $link.attr('up-reveal'))
-    options.cache = u.option(options.cache, $link.attr('up-cache'))
-    options.restoreScroll = u.option(options.restoreScroll, $link.attr('up-restore-scroll'))
+    options.transition = u.option(options.transition, u.castedAttr($link, 'up-transition'), u.castedAttr($link, 'up-animation'))
+    options.history = u.option(options.history, u.castedAttr($link, 'up-history'))
+    options.reveal = u.option(options.reveal, u.castedAttr($link, 'up-reveal'))
+    options.cache = u.option(options.cache, u.castedAttr($link, 'up-cache'))
+    options.restoreScroll = u.option(options.restoreScroll, u.castedAttr($link, 'up-restore-scroll'))
     options.method = followMethod($link, options)
     options = u.merge(options, up.motion.animateOptions(options, $link))
 
@@ -268,7 +268,21 @@ up.link = (->
     
   shouldProcessLinkEvent = (event, $link) ->
     u.isUnmodifiedMouseEvent(event) && !childClicked(event, $link)
-    
+
+  ###*
+  Makes sure that the given link is handled by Up.js.
+
+  This is done by giving the link an `up-follow` attribute
+  if it doesn't already have it an `up-target` or `up-follow` attribute.
+
+  @method up.link.makeFollowable
+  @protected
+  ###
+  makeFollowable = (link) ->
+    $link = $(link)
+    if u.isMissing($link.attr('up-target')) && u.isMissing($link.attr('up-follow'))
+      $link.attr('up-follow', '')
+
   ###*
   If applied on a link, Follows this link via AJAX and replaces the
   current `<body>` element with the response's `<body>` element.
@@ -327,9 +341,9 @@ up.link = (->
   @ujs
   @method [up-expand]
   ###
-  up.compiler '[up-expand]', ($fragment) ->
-    link = $fragment.find('a, [up-href]').get(0)
-    link or u.error('No link to expand within %o', $fragment)
+  up.compiler '[up-expand]', ($area) ->
+    link = $area.find('a, [up-href]').get(0)
+    link or u.error('No link to expand within %o', $area)
     upAttributePattern = /^up-/
     newAttrs = {}
     newAttrs['up-href'] = $(link).attr('href')
@@ -337,10 +351,10 @@ up.link = (->
       name = attribute.name
       if name.match(upAttributePattern)
         newAttrs[name] = attribute.value
-    # Make sure that the containing area will be considered a link
-    u.isGiven(newAttrs['up-target']) or newAttrs['up-follow'] = ''
-    u.setMissingAttrs($fragment, newAttrs)
-    $fragment.removeAttr('up-expand')
+    u.setMissingAttrs($area, newAttrs)
+    $area.removeAttr('up-expand')
+    makeFollowable($area)
+
   
   ###*
   Marks up the current link to be followed *as fast as possible*.
@@ -377,6 +391,7 @@ up.link = (->
   knife: eval(Knife?.point)
   visit: visit
   follow: follow
+  makeFollowable: makeFollowable
   childClicked: childClicked
   followMethod: followMethod
 

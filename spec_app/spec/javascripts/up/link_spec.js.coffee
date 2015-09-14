@@ -114,7 +114,7 @@ describe 'up.link', ->
     describe 'up.visit', ->
       
       it 'should have tests'
-          
+
   describe 'unobtrusive behavior', ->
 
     describe 'a[up-target]', ->

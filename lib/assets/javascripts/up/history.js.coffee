@@ -140,29 +140,26 @@ up.history = (->
 
 
   ###*
-  Add an `up-expand` class to any element that contains a link
-  in order to enlarge the link's click area:
 
-      <div class="notification" up-expand>
-        Record was saved!
-        <a href="/records">Close</a>
-      </div>
+  DOCUMENTATION!!
 
-  In the example above, clicking anywhere within `.notification` element
-  would [follow](#up-follow) the *Close* link.
+      <a href="/default" up-back>Go back</a>
 
-  `up-expand` honors all the UJS behavior in expanded links
-  (`up-target`, `up-instant`, `up-preload`, etc.).
+  This will be transformed to
+
+      <a href="/default" up-href="/previous-page" up-follow>Go back</a>
 
   @ujs
-  @method [up-expand]
+  @method [up-back]
   ###
   up.compiler '[up-back]', ($link) ->
     console.log("up-back", $link, previousUrl)
     if u.isPresent(previousUrl)
       u.setMissingAttrs $link,
         'up-href': previousUrl,
-        'up-restore-scroll': 'true'
+        'up-restore-scroll': 'truxe'
+      $link.removeAttr 'up-back'
+      up.link.makeFollowable($link)
 
   up.bus.on 'framework:reset', reset
 

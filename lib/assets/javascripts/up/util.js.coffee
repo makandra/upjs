@@ -562,6 +562,14 @@ up.util = (->
   contains = (stringOrArray, element) ->
     stringOrArray.indexOf(element) >= 0
 
+  castedAttr = ($element, attrName) ->
+    value = $element.attr(attrName)
+    switch value
+      when 'false'  then false
+      when 'true'   then true
+      when ''       then true
+      else value # other strings, undefined, null, ...
+
   castsToTrue = (object) ->
     String(object) == "true"
     
@@ -828,6 +836,7 @@ up.util = (->
   toArray: toArray
   castsToTrue: castsToTrue
   castsToFalse: castsToFalse
+  castedAttr: castedAttr
   locationFromXhr: locationFromXhr
   methodFromXhr: methodFromXhr
   clientSize: clientSize
