@@ -114,7 +114,9 @@ describe 'up.flow', ->
             expect(window.scriptTagExecuted).toHaveBeenCalledWith('middle')
             done()
 
-        describe 'automatic scrolling', ->
+        it 'restores the scroll positions of all viewports within the target with options.restoreScroll'
+
+        describe 'revealing of elements', ->
 
           beforeEach ->
             @revealedHTML = ''

@@ -63,6 +63,7 @@ up.history = (->
     normalizeUrl(url) == currentUrl()
 
   observeNewUrl = (url) ->
+    console.log("observing new url %o", url)
     if nextPreviousUrl
       previousUrl = nextPreviousUrl
       nextPreviousUrl = undefined
@@ -93,8 +94,9 @@ up.history = (->
         state = buildState()
         # console.log("[#{method}] URL %o with state %o", url, state)
         u.debug("Changing history to URL %o (%o)", url, method)
-        previousUrl = url
+        # previousUrl = url
         window.history[fullMethod](state, '', url)
+        observeNewUrl(currentUrl())
       else
         u.error "This browser doesn't support history.pushState"
 
@@ -135,6 +137,32 @@ up.history = (->
       # on pageload (Safari, Chrome < 34).
       # We should check in 2023 if we can remove this.
       setTimeout register, 100
+
+
+  ###*
+  Add an `up-expand` class to any element that contains a link
+  in order to enlarge the link's click area:
+
+      <div class="notification" up-expand>
+        Record was saved!
+        <a href="/records">Close</a>
+      </div>
+
+  In the example above, clicking anywhere within `.notification` element
+  would [follow](#up-follow) the *Close* link.
+
+  `up-expand` honors all the UJS behavior in expanded links
+  (`up-target`, `up-instant`, `up-preload`, etc.).
+
+  @ujs
+  @method [up-expand]
+  ###
+  up.compiler '[up-back]', ($link) ->
+    console.log("up-back", $link, previousUrl)
+    if u.isPresent(previousUrl)
+      u.setMissingAttrs $link,
+        'up-href': previousUrl,
+        'up-restore-scroll': 'true'
 
   up.bus.on 'framework:reset', reset
 

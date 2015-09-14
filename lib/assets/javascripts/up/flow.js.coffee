@@ -189,7 +189,8 @@ up.flow = (->
     # Remember where the element came from so we can
     # offer reload functionality.
     setSource($new, options.source)
-    up.layout.restoreScroll(within: $new) if options.restoreScroll
+    if u.castsToTrue(options.restoreScroll)
+      up.layout.restoreScroll(within: $new)
     autofocus($new)
     # The fragment should be readiet before animating,
     # so transitions see .up-current classes

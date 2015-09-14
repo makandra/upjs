@@ -219,6 +219,9 @@ up.link = (->
   @param [up-href]
     The destination URL to follow.
     If omitted, the the link's `href` attribute will be used.
+  @param [up-restore-scroll='false']
+    Whether to restore the scroll position of all viewports
+    within the target selector.
   ###
   up.on 'click', 'a[up-target], [up-href][up-target]', (event, $link) ->
     if shouldProcessLinkEvent(event, $link)
@@ -292,6 +295,9 @@ up.link = (->
   @param [up-href]
     The destination URL to follow.
     If omitted, the the link's `href` attribute will be used.
+  @param [up-restore-scroll='false']
+    Whether to restore the scroll position of all viewports
+    within the response.
   ###
   up.on 'click', 'a[up-follow], [up-href][up-follow]', (event, $link) ->
     if shouldProcessLinkEvent(event, $link)
