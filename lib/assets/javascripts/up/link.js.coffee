@@ -376,12 +376,14 @@ up.link = (->
   @ujs
   ###
   up.compiler '[up-dash]', ($element) ->
-    target = $element.attr('up-dash')
+    target = u.castedAttr($element, 'up-dash')
     newAttrs = {
       'up-preload': 'true',
       'up-instant': 'true'
     }
-    if u.isBlank(target) || u.castsToTrue(target)
+    if target is true
+      # If it's literally `true` then we don't have a target selector.
+      # Just follow the link by replacing `<body>`.
       newAttrs['up-follow'] = ''
     else
       newAttrs['up-target'] = target

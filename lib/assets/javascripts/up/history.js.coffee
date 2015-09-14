@@ -157,7 +157,7 @@ up.history = (->
     if u.isPresent(previousUrl)
       u.setMissingAttrs $link,
         'up-href': previousUrl,
-        'up-restore-scroll': 'truxe'
+        'up-restore-scroll': ''
       $link.removeAttr 'up-back'
       up.link.makeFollowable($link)
 

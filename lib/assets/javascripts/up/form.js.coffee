@@ -93,7 +93,7 @@ up.form = (->
     
     $form.addClass('up-active')
     
-    if !up.browser.canPushState() && !u.castsToFalse(historyOption)
+    if !up.browser.canPushState() && historyOption != false
       $form.get(0).submit()
       return
 
@@ -106,15 +106,14 @@ up.form = (->
     }
 
     successUrl = (xhr) ->
-      url = if historyOption
-        if u.castsToFalse(historyOption)
-          false
-        else if u.isString(historyOption)
-          historyOption
+      url = undefined
+      if u.isGiven(historyOption)
+        if historyOption == false || u.isString(historyOption)
+          url = historyOption
         else if currentLocation = u.locationFromXhr(xhr)
-          currentLocation
+          url = currentLocation
         else if request.type == 'GET'
-          request.url + '?' + request.data
+          url = request.url + '?' + request.data
       u.option(url, false)
 
     up.proxy.ajax(request)

@@ -170,8 +170,8 @@ up.proxy = (->
     If set to `false` a network connection will always be attempted.
   ###
   ajax = (options) ->
-    forceCache = u.castsToTrue(options.cache)
-    ignoreCache = u.castsToFalse(options.cache)
+    forceCache = (options.cache == true)
+    ignoreCache = (options.cache == false)
 
     request = u.only(options, 'url', 'method', 'data', 'selector', '_normalized')
 

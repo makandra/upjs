@@ -570,11 +570,11 @@ up.util = (->
       when ''       then true
       else value # other strings, undefined, null, ...
 
-  castsToTrue = (object) ->
-    String(object) == "true"
-    
-  castsToFalse = (object) ->
-    String(object) == "false"
+#  castsToTrue = (object) ->
+#    String(object) == "true"
+#
+#  castsToFalse = (object) ->
+#    String(object) == "false"
     
   locationFromXhr = (xhr) ->
     xhr.getResponseHeader('X-Up-Location')
@@ -834,8 +834,8 @@ up.util = (->
   endsWith: endsWith
   isArray: isArray
   toArray: toArray
-  castsToTrue: castsToTrue
-  castsToFalse: castsToFalse
+#  castsToTrue: castsToTrue
+#  castsToFalse: castsToFalse
   castedAttr: castedAttr
   locationFromXhr: locationFromXhr
   methodFromXhr: methodFromXhr

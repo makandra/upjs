@@ -75,7 +75,7 @@ up.flow = (->
     else
       u.createSelectorFromElement($(selectorOrElement))
       
-    if !up.browser.canPushState() && !u.castsToFalse(options.history)
+    if !up.browser.canPushState() && options.history != false
       up.browser.loadPage(url, u.only(options, 'method')) unless options.preload
       return u.resolvedPromise()
 
@@ -99,9 +99,9 @@ up.flow = (->
           selector: selector
         up.proxy.alias(request, newRequest)
         url = currentLocation
-      if u.isMissing(options.history) || u.castsToTrue(options.history)
+      unless options.history is false
         options.history = url
-      if u.isMissing(options.source) || u.castsToTrue(options.source)
+      unless options.source is false
         options.source = url
       implant(selector, html, options) unless options.preload
 
@@ -133,12 +133,6 @@ up.flow = (->
     options = u.options(options, 
       historyMethod: 'push'
     )
-    
-    if u.castsToFalse(options.history)
-      options.history = null
-
-    if u.castsToFalse(options.reveal)
-      options.reveal = false
 
     options.source = u.option(options.source, options.history)
     response = parseResponse(html)
@@ -188,8 +182,9 @@ up.flow = (->
       up.history[options.historyMethod](options.history)
     # Remember where the element came from so we can
     # offer reload functionality.
-    setSource($new, options.source)
-    if u.castsToTrue(options.restoreScroll)
+    unless options.source is false
+      setSource($new, options.source)
+    if options.restoreScroll
       up.layout.restoreScroll(within: $new)
     autofocus($new)
     # The fragment should be readiet before animating,
