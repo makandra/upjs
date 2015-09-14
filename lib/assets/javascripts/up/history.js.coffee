@@ -40,6 +40,12 @@ up.history = (->
   normalizeUrl = (url) ->
     u.normalizeUrl(url, hash: true)
 
+  ###*
+  Returns a normalized URL for the current history entry.
+
+  @method up.history.url
+  @protected
+  ####
   currentUrl = ->
     normalizeUrl(up.browser.url())
   
@@ -71,9 +77,6 @@ up.history = (->
   push = (url) ->
     manipulate("push", url) unless isCurrentUrl(url)
 
-  ###*
-  @private
-  ###
   manipulate = (method, url) ->
     if up.browser.canPushState()
       method += "State" # resulting in either pushState or replaceState
