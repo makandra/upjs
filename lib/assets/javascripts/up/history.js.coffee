@@ -65,27 +65,27 @@ up.history = (->
   @protected
   ###
   replace = (url, options) ->
-    options = u.options(options, force: false)
-    if options.force || !isCurrentUrl(url)
-      manipulate("replace", url)
+    manipulate("replace", url, options)
 
   ###*
   @method up.history.push  
   @param {String} url
   @protected
   ###
-  push = (url) ->
-    manipulate("push", url) unless isCurrentUrl(url)
+  push = (url, options) ->
+    manipulate("push", url, options)
 
-  manipulate = (method, url) ->
-    if up.browser.canPushState()
-      method += "State" # resulting in either pushState or replaceState
-      state = buildState()
-      console.log("[#{method}] URL %o with state %o", url, state)
-      previousUrl = url
-      window.history[method](state, '', url)
-    else
-      u.error "This browser doesn't support history.pushState"
+  manipulate = (method, url, options) ->
+    options = u.options(options, force: false)
+    if options.force || !isCurrentUrl(url)
+      if up.browser.canPushState()
+        method += "State" # resulting in either pushState or replaceState
+        state = buildState()
+        console.log("[#{method}] URL %o with state %o", url, state)
+        previousUrl = url
+        window.history[method](state, '', url)
+      else
+        u.error "This browser doesn't support history.pushState"
 
   buildState = ->
     fromUp: true
@@ -114,7 +114,6 @@ up.history = (->
   if up.browser.canPushState()
     register = ->
       $(window).on "popstate", pop
-      $(window).on 'unload', -> console.log("UNLOAD!")
       replace(currentUrl(), force: true)
 
     if jasmine?
