@@ -140,14 +140,24 @@ up.history = (->
 
 
   ###*
+  Changes the link's destination so it points to the previous URL.
 
-  DOCUMENTATION!!
+  Note that this will *not* call `location.back()`, but will set
+  the link's `up-href` attribute to the actual, previous URL.
 
-      <a href="/default" up-back>Go back</a>
+  \#\#\#\# Under the hood
 
-  This will be transformed to
+  This link ...
 
-      <a href="/default" up-href="/previous-page" up-follow>Go back</a>
+      <a href="/default" up-back>
+        Go back
+      </a>
+
+  ... will be transformed to:
+
+      <a href="/default" up-href="/previous-page" up-restore-scroll up-follow>
+        Goback
+      </a>
 
   @ujs
   @method [up-back]
