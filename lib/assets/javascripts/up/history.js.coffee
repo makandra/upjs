@@ -29,6 +29,16 @@ up.history = (->
     popTargets: ['body']
     restoreScroll: true
 
+  ###*
+  Returns the previous URL in the browser history.
+
+  Note that this will only work reliably for history changes that
+  were applied by [`up.history.push`](#up.history.replace) or
+  [`up.history.replace`](#up.history.replace).
+
+  @method up.history.previousUrl
+  @protected
+  ###
   previousUrl = undefined
   nextPreviousUrl = undefined
 
@@ -65,7 +75,7 @@ up.history = (->
   @protected
   ###
   replace = (url, options) ->
-    manipulate("replace", url, options)
+    manipulate('replace', url, options)
 
   ###*
   @method up.history.push  
@@ -73,17 +83,18 @@ up.history = (->
   @protected
   ###
   push = (url, options) ->
-    manipulate("push", url, options)
+    manipulate('push', url, options)
 
   manipulate = (method, url, options) ->
     options = u.options(options, force: false)
     if options.force || !isCurrentUrl(url)
       if up.browser.canPushState()
-        method += "State" # resulting in either pushState or replaceState
+        fullMethod = "#{method}State" # resulting in either pushState or replaceState
         state = buildState()
-        console.log("[#{method}] URL %o with state %o", url, state)
+        # console.log("[#{method}] URL %o with state %o", url, state)
+        u.debug("Changing history to URL %o (%o)", url, method)
         previousUrl = url
-        window.history[method](state, '', url)
+        window.history[fullMethod](state, '', url)
       else
         u.error "This browser doesn't support history.pushState"
 
@@ -102,7 +113,7 @@ up.history = (->
       restoreScroll: config.restoreScroll
 
   pop = (event) ->
-    console.log("[pop] pop to url %o", currentUrl())
+    u.debug("History state popped to URL %o", currentUrl())
     observeNewUrl(currentUrl())
     up.layout.saveScroll(url: previousUrl)
     state = event.originalEvent.state
@@ -131,6 +142,7 @@ up.history = (->
   push: push
   replace: replace
   url: currentUrl
+  previousUrl: -> previousUrl
   normalizeUrl: normalizeUrl
 
 )()

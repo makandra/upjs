@@ -621,6 +621,17 @@ up.util = (->
       array.splice(index, 1)
       element
 
+  ###*
+  @method up.util.cache
+  @param {Number|Function} [config.size]
+    Maximum number of cache entries.
+    Set to `undefined` to not limit the cache size.
+  @param {Number|Function} [config.expiry]
+    The number of milliseconds after which a cache entry
+    will be discarded.
+  @param {String} [config.log]
+    A prefix for log entries printed by this cache object.
+  ###
   cache = (config) ->
 
     store = undefined
@@ -629,6 +640,11 @@ up.util = (->
       store = {}
 
     clear()
+
+    log = (args...) ->
+      if config.log
+        args[0] = "[#{config.log}] #{args[0]}"
+        debug(args...)
 
     maxSize = ->
       if isMissing(config.size)
@@ -700,14 +716,14 @@ up.util = (->
       storeKey = normalizeStoreKey(key)
       if entry = store[storeKey]
         if !isFresh(entry)
-          debug("Discarding stale cache entry for %o", key)
+          log("Discarding stale cache entry for %o", key)
           remove(key)
           fallback
         else
-          debug("Cache hit for %o", key)
+          log("Cache hit for %o", key)
           entry.value
       else
-        debug("Cache miss for %o", key)
+        log("Cache miss for %o", key)
         fallback
 
     alias: alias

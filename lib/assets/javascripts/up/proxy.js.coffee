@@ -92,6 +92,7 @@ up.proxy = (->
     size: -> config.cacheSize
     expiry: -> config.cacheExpiry
     key: cacheKey
+    log: 'up.proxy'
 
   ###*
   @protected

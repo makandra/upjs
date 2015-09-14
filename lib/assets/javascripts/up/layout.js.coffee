@@ -321,7 +321,6 @@ up.layout = (->
   saveScroll = (options = {}) ->
     url = u.option(options.url, up.history.url())
     tops = u.option(options.tops, scrollTops())
-    console.log("[saveScroll] tops for %o are %o", url, tops)
     lastScrollTops.set(url, tops)
 
   ###*
@@ -340,13 +339,10 @@ up.layout = (->
       viewports()
 
     tops = lastScrollTops.get(up.history.url())
-    console.log("[restoreScroll] retrieved tops for %o are %o", up.history.url(), tops)
 
     for selector, scrollTop of tops
       $matchingViewport = $viewports.filter(selector)
-      console.log("[restoreScroll] scrolling %o to %o", $matchingViewport, scrollTop)
       up.scroll($matchingViewport, scrollTop, duration: 0)
-      console.log("[restoreScroll] scrollTop of %o is now %o", $matchingViewport, scrollTop)
 
   ###*
   Marks this element as a scrolling container. Apply this ttribute if your app uses

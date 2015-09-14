@@ -66,7 +66,7 @@ up.flow = (->
   ###
   replace = (selectorOrElement, url, options) ->
 
-    console.log("[replace] from URL %o", url)
+    u.debug("Replace %o with %o", selectorOrElement, url)
 
     options = u.options(options)
     
