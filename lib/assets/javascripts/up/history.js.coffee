@@ -18,10 +18,10 @@ up.history = (->
 
   ###*
   @method up.history.defaults
-  @param {Array<String>} [options.popTarget=`'body'`]
+  @param {Array<String>} [options.popTargets=['body']]
     An array of CSS selectors to replace when the user goes
     back in history.
-  @param {Boolean} [options.restoreScroll=`true`]
+  @param {Boolean} [options.restoreScroll=true]
     Whether to restore the known scroll positions
     when the user goes back or forward in history.
   ###
