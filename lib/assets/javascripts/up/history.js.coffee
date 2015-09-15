@@ -111,7 +111,7 @@ up.history = (->
       history: false,
       reveal: false,
       transition: 'none',
-      saveScroll: false
+      saveScroll: false # since the URL was already changed by the browser, don't save scroll state
       restoreScroll: config.restoreScroll
 
   pop = (event) ->
