@@ -155,20 +155,43 @@ up.motion = (->
     
   GHOSTING_PROMISE_KEY = 'up-ghosting-promise'
 
-  withGhosts = ($old, $new, block) ->
-    oldCopy = null
-    newCopy = null
+  withGhosts = ($old, $new, options, block) ->
+
+    # console.log("withGhosts options %o", options)
+
+    oldCopy = undefined
+    newCopy = undefined
+
+    oldScrollTop = undefined
+    newScrollTop = undefined
+
+    $viewport = up.layout.viewportOf($old)
 
     u.temporaryCss $new, display: 'none', ->
+      # Within this block, $new is hidden but $old is visible
       oldCopy = prependGhost($old)
       oldCopy.$ghost.addClass('up-destroying')
       oldCopy.$bounds.addClass('up-destroying')
+      oldScrollTop = $viewport.scrollTop()
+
     u.temporaryCss $old, display: 'none', ->
+      # Within this block, $old is hidden but $new is visible
+      if options.reveal
+        up.reveal($new)
       newCopy = prependGhost($new)
-    # $old should take up space in the page flow until the transition ends
-    $old.css(visibility: 'hidden')
-    
-    showNew = u.temporaryCss($new, display: 'none')
+      newScrollTop = $viewport.scrollTop()
+
+    # Since we have scrolled the viewport (containing both $old and $new),
+    # we must shift the old copy so it looks like it it is still sitting
+    # in the same position.
+    oldCopy.moveTop(newScrollTop - oldScrollTop)
+
+    # Hide $old since we no longer need it.
+    $old.hide()
+    # We will let $new take up space, but hide it so the
+    # ghosts above will play out the transition.
+    showNew = u.temporaryCss($new, visibility: 'hidden')
+
     promise = block(oldCopy.$ghost, newCopy.$ghost)
     $old.data(GHOSTING_PROMISE_KEY, promise)
     $new.data(GHOSTING_PROMISE_KEY, promise)
@@ -179,9 +202,6 @@ up.motion = (->
       oldCopy.$bounds.remove()
       newCopy.$bounds.remove()
       # Now that the transition is over we show $new again.
-      # Since we expect $old to be removed in a heartbeat,
-      # $new should take up space
-      $old.css(display: 'none')
       showNew()
 
     promise
@@ -257,20 +277,19 @@ up.motion = (->
   ###  
   morph = (source, target, transitionOrName, options) ->
     if up.browser.canCssAnimation()
-      options = animateOptions(options)
+      parsedOptions = u.only(options, 'reveal')
+      parsedOptions = u.extend(parsedOptions, animateOptions(options))
       $old = $(source)
       $new = $(target)
+
       finish($old)
       finish($new)
       if transitionOrName == 'none' or transitionOrName == false
         # don't create ghosts if we aren't really transitioning
         none()
       else if transition = u.presence(transitionOrName, u.isFunction) || transitions[transitionOrName]
-        withGhosts $old, $new, ($oldGhost, $newGhost) ->
-          assertIsDeferred(transition($oldGhost, $newGhost, options), transitionOrName)
-      else if animation = animations[transitionOrName]
-        $old.hide()
-        animate($new, animation, options)
+        withGhosts $old, $new, parsedOptions, ($oldGhost, $newGhost) ->
+          assertIsDeferred(transition($oldGhost, $newGhost, parsedOptions), transitionOrName)
       else if u.isString(transitionOrName) && transitionOrName.indexOf('/') >= 0
         parts = transitionOrName.split('/')
         transition = ($old, $new, options) ->
@@ -278,7 +297,7 @@ up.motion = (->
             animate($old, parts[0], options),
             animate($new, parts[1], options)
           )
-        morph($old, $new, transition, options)
+        morph($old, $new, transition, parsedOptions)
       else
         u.error("Unknown transition %o", transitionOrName)
     else
@@ -313,16 +332,23 @@ up.motion = (->
     $bounds.css(position: 'absolute')
     $bounds.css(elementDims)
 
+    top = elementDims.top
+
+    moveTop = (diff) ->
+      if diff != 0
+        top += diff
+        $bounds.css(top: top)
+
     $ghost.appendTo($bounds)
     $bounds.insertBefore($element)
 
     # Make sure that we don't shift a child element with margins
     # that can no longer collapse against a previous sibling
-    diff = $ghost.offset().top - $element.offset().top
-    $bounds.css(top: elementDims.top - diff) if diff != 0
+    moveTop($element.offset().top - $ghost.offset().top)
 
     $ghost: $ghost
     $bounds: $bounds
+    moveTop: moveTop
 
   ###*
   Defines a named transition.
