@@ -173,6 +173,7 @@ up.motion = (->
       oldCopy.$ghost.addClass('up-destroying')
       oldCopy.$bounds.addClass('up-destroying')
       oldScrollTop = $viewport.scrollTop()
+      # $viewport.scrollTop(oldScrollTop + 1)
 
     u.temporaryCss $old, display: 'none', ->
       # Within this block, $old is hidden but $new is visible
@@ -181,10 +182,14 @@ up.motion = (->
       newCopy = prependGhost($new)
       newScrollTop = $viewport.scrollTop()
 
+    console.log("top of oldGhost is %o, scrollTops %o / %o", oldCopy.$bounds.css('top'), oldScrollTop, newScrollTop)
+
     # Since we have scrolled the viewport (containing both $old and $new),
     # we must shift the old copy so it looks like it it is still sitting
     # in the same position.
     oldCopy.moveTop(newScrollTop - oldScrollTop)
+
+    console.log("corrected top of oldGhost is %o", oldCopy.$bounds.css('top'))
 
     # Hide $old since we no longer need it.
     $old.hide()
@@ -227,11 +232,11 @@ up.motion = (->
       u.debug('Canceling existing ghosting on %o', $element)
       existingGhosting.resolve?()
       
-  assertIsDeferred = (object, origin) ->
+  assertIsDeferred = (object, source) ->
     if u.isDeferred(object)
       object
     else
-      u.error("Did not return a promise with .then and .resolve methods: %o", origin)
+      u.error("Did not return a promise with .then and .resolve methods: %o", source)
 
   ###*
   Performs an animated transition between two elements.
@@ -272,6 +277,8 @@ up.motion = (->
     The timing function that controls the transition's acceleration.
     See [W3C documentation](http://www.w3.org/TR/css3-transitions/#transition-timing-function)
     for a list of pre-defined timing functions.
+  @param {Boolean} [options.reveal=false]
+    Whether to reveal the new element by scrolling its parent viewport.
   @return {Promise}
     A promise for the transition's end.
   ###  
@@ -284,12 +291,14 @@ up.motion = (->
 
       finish($old)
       finish($new)
-      if transitionOrName == 'none' or transitionOrName == false
-        # don't create ghosts if we aren't really transitioning
-        none()
+      if transitionOrName == 'none' || transitionOrName == false || animation = animations[transitionOrName]
+        $old.hide()
+        up.reveal($new) if options.reveal
+        animate($new, animation || 'none', options)
       else if transition = u.presence(transitionOrName, u.isFunction) || transitions[transitionOrName]
         withGhosts $old, $new, parsedOptions, ($oldGhost, $newGhost) ->
-          assertIsDeferred(transition($oldGhost, $newGhost, parsedOptions), transitionOrName)
+          transitionPromise = transition($oldGhost, $newGhost, parsedOptions)
+          assertIsDeferred(transitionPromise, transitionOrName)
       else if u.isString(transitionOrName) && transitionOrName.indexOf('/') >= 0
         parts = transitionOrName.split('/')
         transition = ($old, $new, options) ->
