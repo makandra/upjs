@@ -852,6 +852,29 @@ up.util = (->
       parent.insertBefore(wrappedNode, wrapper)
     parent.removeChild(wrapper)
 
+  offsetParent = ($element) ->
+    $match = undefined
+    while $parent = $element.parent() && $parent.length
+      position = $parent.css('position')
+      if position == 'absolute' || position == 'relative' || $parent.is('body')
+        $match = $parent
+        break
+    $match
+
+  fixedToAbsolute = ($element, $viewport) ->
+    $futureOffsetParent = offsetParent($element)
+    elementCoords = $element.offset()
+    console.log("top is %o / %o", $viewport, $viewport.scrollTop())
+    futureParentCoords = $futureOffsetParent.offset() + $viewport.scrollTop()
+    $element.css
+      position: 'absolute'
+      left: elementCoords.left - futureParentCoords.left
+      top: elementcoords.top - futureParentCoords.top
+      right: ''
+      bottom ''
+
+  offsetParent: offsetParent
+  fixedToAbsolute: fixedToAbsolute
   presentAttr: presentAttr
   createElement: createElement
   normalizeUrl: normalizeUrl

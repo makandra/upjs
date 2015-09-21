@@ -169,7 +169,7 @@ up.motion = (->
 
     u.temporaryCss $new, display: 'none', ->
       # Within this block, $new is hidden but $old is visible
-      oldCopy = prependGhost($old)
+      oldCopy = prependGhost($old, $viewport)
       oldCopy.$ghost.addClass('up-destroying')
       oldCopy.$bounds.addClass('up-destroying')
       oldScrollTop = $viewport.scrollTop()
@@ -179,7 +179,7 @@ up.motion = (->
       # Within this block, $old is hidden but $new is visible
       if options.reveal
         up.reveal($new)
-      newCopy = prependGhost($new)
+      newCopy = prependGhost($new, $viewport)
       newScrollTop = $viewport.scrollTop()
 
     console.log("top of oldGhost is %o, scrollTops %o / %o", oldCopy.$bounds.css('top'), oldScrollTop, newScrollTop)
@@ -317,7 +317,7 @@ up.motion = (->
   ###*
   @private
   ###
-  prependGhost = ($element) ->
+  prependGhost = ($element, $viewport) ->
     elementDims = u.measure($element, relative: true, inner: true)
 
     $ghost = $element.clone()
@@ -340,6 +340,10 @@ up.motion = (->
     $bounds = $('<div class="up-bounds"></div>')
     $bounds.css(position: 'absolute')
     $bounds.css(elementDims)
+
+    $fixedElements = up.layout.fixedElements($ghost)
+    for $fixedElement in $fixedElements
+      u.fixedToAbsolute($fixedElement, $viewport)
 
     top = elementDims.top
 
