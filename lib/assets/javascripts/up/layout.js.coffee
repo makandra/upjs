@@ -323,10 +323,10 @@ up.layout = (->
     topsBySelector
 
   ###*
-  @method up.layout.fixedElements
+  @method up.layout.fixedChildren
   @protected
   ###
-  fixedElements = (root) ->
+  fixedChildren = (root = undefined) ->
     root ||= document.body
     $root = $(root)
     $elements = $root.find('[up-fixed]')
@@ -471,7 +471,7 @@ up.layout = (->
   saveScroll: saveScroll
   restoreScroll: restoreScroll
   anchoredRight: anchoredRight
-  fixedElements: fixedElements
+  fixedChildren: fixedChildren
 
 )()
 

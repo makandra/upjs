@@ -341,10 +341,6 @@ up.motion = (->
     $bounds.css(position: 'absolute')
     $bounds.css(elementDims)
 
-    $fixedElements = up.layout.fixedElements($ghost)
-    for $fixedElement in $fixedElements
-      u.fixedToAbsolute($fixedElement, $viewport)
-
     top = elementDims.top
 
     moveTop = (diff) ->
@@ -358,6 +354,11 @@ up.motion = (->
     # Make sure that we don't shift a child element with margins
     # that can no longer collapse against a previous sibling
     moveTop($element.offset().top - $ghost.offset().top)
+
+    $fixedElements = up.layout.fixedChildren($ghost)
+    for fixedElement in $fixedElements
+      console.log("Converting fixed to absolute of %o", fixedElement)
+      u.fixedToAbsolute(fixedElement, $viewport)
 
     $ghost: $ghost
     $bounds: $bounds

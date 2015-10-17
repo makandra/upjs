@@ -854,24 +854,28 @@ up.util = (->
 
   offsetParent = ($element) ->
     $match = undefined
-    while $parent = $element.parent() && $parent.length
-      position = $parent.css('position')
-      if position == 'absolute' || position == 'relative' || $parent.is('body')
-        $match = $parent
+    while ($element = $element.parent()) && $element.length
+      position = $element.css('position')
+      console.log("Iteration element is %o with position %o", $element, position)
+      if position == 'absolute' || position == 'relative' || $element.is('body')
+        $match = $element
         break
     $match
 
-  fixedToAbsolute = ($element, $viewport) ->
+  fixedToAbsolute = (element, $viewport) ->
+    $element = $(element)
     $futureOffsetParent = offsetParent($element)
-    elementCoords = $element.offset()
-    console.log("top is %o / %o", $viewport, $viewport.scrollTop())
-    futureParentCoords = $futureOffsetParent.offset() + $viewport.scrollTop()
+    # To get a fixed elements distance from the edge of the screen,
+    # use position(), not offset(). offset() would include the current
+    # scrollTop of the viewport.
+    elementCoords = $element.position()
+    futureParentCoords = $futureOffsetParent.offset()
     $element.css
       position: 'absolute'
       left: elementCoords.left - futureParentCoords.left
-      top: elementcoords.top - futureParentCoords.top
+      top: elementCoords.top - futureParentCoords.top + $viewport.scrollTop()
       right: ''
-      bottom ''
+      bottom: ''
 
   offsetParent: offsetParent
   fixedToAbsolute: fixedToAbsolute
