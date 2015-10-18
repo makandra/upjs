@@ -2,4 +2,4 @@
 # from the screen edge, so we can't have the Jasmine runner to have
 # any margins on the body.
 beforeEach ->
-  $('body').css(margin: 0)
+  $('body').css('margin-top': 0)
