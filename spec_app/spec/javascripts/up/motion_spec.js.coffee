@@ -130,6 +130,8 @@ describe 'up.motion', ->
 
             done()
 
+        it 'can transition between two elements within the same, scrolled viewport'
+
         it 'cancels an existing transition on the element by instantly jumping to the last frame', ->
           $old = affix('.old').text('old content')
           $new = affix('.new').text('new content')
@@ -211,7 +213,7 @@ describe 'up.motion', ->
         expect($clonedChild.offset()).toEqual($child.offset())
 
       it 'correctly positions the ghost over an element within a scrolled body', ->
-        $body = $('body').css(margin: 0)
+        $body = $('body')
         $element1 = $('<div class="fixture"></div>').css(height: '75px').prependTo($body)
         $element2 = $('<div class="fixture"></div>').css(height: '100px').insertAfter($element1)
         $body.scrollTop(17)
@@ -221,3 +223,21 @@ describe 'up.motion', ->
         expect($ghost.css('position')).toBe('static')
 
       it 'correctly positions the ghost over an element within a viewport with overflow-y: scroll'
+
+      it 'converts fixed elements within the copies to absolutely positioning', ->
+        $element = affix('.element').css
+          position: 'absolute'
+          top: '50px'
+          left: '50px'
+        $fixedChild = $('<div class="fixed-child" up-fixed></div>').css
+          position: 'fixed'
+          left: '77px'
+          top: '77px'
+        $fixedChild.appendTo($element)
+        up.motion.prependCopy($element, $('body'))
+        $fixedChildGhost = $('.up-ghost .fixed-child')
+        expect($fixedChildGhost.css(['position', 'left', 'top'])).toEqual
+          position: 'absolute',
+          left: '27px',
+          top: '27px'
+
