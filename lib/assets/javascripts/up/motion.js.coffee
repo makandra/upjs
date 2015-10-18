@@ -175,18 +175,14 @@ up.motion = (->
 
     u.temporaryCss $old, display: 'none', ->
       # Within this block, $old is hidden but $new is visible
-      up.reveal($new) if options.reveal
+      up.reveal($new, viewport: $viewport) if options.reveal
       newCopy = prependCopy($new, $viewport)
       newScrollTop = $viewport.scrollTop()
-
-    console.log("top of oldGhost is %o, scrollTops %o / %o", oldCopy.$bounds.css('top'), oldScrollTop, newScrollTop)
 
     # Since we have scrolled the viewport (containing both $old and $new),
     # we must shift the old copy so it looks like it it is still sitting
     # in the same position.
     oldCopy.moveTop(newScrollTop - oldScrollTop)
-
-    console.log("corrected top of oldGhost is %o", oldCopy.$bounds.css('top'))
 
     # Hide $old since we no longer need it.
     $old.hide()
@@ -363,7 +359,6 @@ up.motion = (->
 
     $fixedElements = up.layout.fixedChildren($ghost)
     for fixedElement in $fixedElements
-      console.log("Converting fixed to absolute of %o", fixedElement)
       u.fixedToAbsolute(fixedElement, $viewport)
 
     $ghost: $ghost

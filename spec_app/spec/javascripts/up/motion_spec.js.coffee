@@ -130,8 +130,6 @@ describe 'up.motion', ->
 
             done()
 
-        it 'can transition between two elements within the same, scrolled viewport'
-
         it 'cancels an existing transition on the element by instantly jumping to the last frame', ->
           $old = affix('.old').text('old content')
           $new = affix('.new').text('new content')
@@ -146,6 +144,39 @@ describe 'up.motion', ->
           expect($ghost2).toHaveLength(1)
           # Check that it's a different ghosts
           expect($ghost2).not.toEqual($ghost1)
+
+        describe 'with { reveal: true } option', ->
+
+          it 'reveals the new element while making the old element within the same viewport appear as if it would keep its scroll position', ->
+            $container = affix('.container[up-viewport]').css
+              'width': '200px'
+              'height': '200px'
+              'overflow-y': 'scroll'
+              'position': 'fixed'
+              'left': 0,
+              'top': 0
+            $old = affix('.old').appendTo($container).css(height: '600px')
+            $container.scrollTop(300)
+
+            $new = affix('.new').insertBefore($old).css(height: '600px')
+
+            up.morph($old, $new, 'cross-fade', duration: 50, reveal: true)
+
+            $oldGhost = $('.old.up-ghost')
+            $newGhost = $('.new.up-ghost')
+
+            # Container is scrolled up due to { reveal: true } option.
+            # Since $old and $new are sitting in the same viewport with a
+            # single shares scrollbar This will make the ghost for $old jump.
+            expect($container.scrollTop()).toEqual(0)
+
+            # See that the ghost for $new is aligned with the top edge
+            # of the viewport.
+            expect($newGhost.offset().top).toEqual(0)
+
+            # The ghost for $old is shifted upwards to make it looks like it
+            # was at the scroll position before we revealed $new.
+            expect($oldGhost.offset().top).toEqual(-300)
 
       else
 
