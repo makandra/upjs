@@ -171,14 +171,14 @@ describe 'up.motion', ->
 
       it 'should have tests'
 
-    describe 'up.motion.prependGhost', ->
+    describe 'up.motion.prependCopy', ->
 
       afterEach ->
         $('.up-bounds, .up-ghost, .fixture').remove()
 
       it 'clones the given element into a .up-ghost-bounds container and inserts it as a sibling before the element', ->
         $element = affix('.element').text('element text')
-        up.motion.prependGhost($element)
+        up.motion.prependCopy($element)
         $bounds = $element.prev()
         expect($bounds).toExist()
         expect($bounds).toHaveClass('up-bounds')
@@ -190,13 +190,13 @@ describe 'up.motion', ->
       it 'removes <script> tags from the cloned element', ->
         $element = affix('.element')
         $('<script></script>').appendTo($element)
-        up.motion.prependGhost($element)
+        up.motion.prependCopy($element)
         $ghost = $('.up-ghost')
         expect($ghost.find('script')).not.toExist()
 
       it 'absolutely positions the ghost over the given element', ->
         $element = affix('.element')
-        up.motion.prependGhost($element)
+        up.motion.prependCopy($element)
         $ghost = $('.up-ghost')
         expect($ghost.offset()).toEqual($element.offset())
         expect($ghost.width()).toEqual($element.width())
@@ -204,14 +204,14 @@ describe 'up.motion', ->
 
       it 'accurately positions the ghost over an element with margins', ->
         $element = affix('.element').css(margin: '40px')
-        up.motion.prependGhost($element)
+        up.motion.prependCopy($element)
         $ghost = $('.up-ghost')
         expect($ghost.offset()).toEqual($element.offset())
 
       it "doesn't change the position of a child whose margins no longer collapse", ->
         $element = affix('.element')
         $child = $('<div class="child"></div>').css(margin: '40px').appendTo($element)
-        up.motion.prependGhost($element)
+        up.motion.prependCopy($element)
         $clonedChild = $('.up-ghost .child')
         expect($clonedChild.offset()).toEqual($child.offset())
 
@@ -220,7 +220,7 @@ describe 'up.motion', ->
         $element1 = $('<div class="fixture"></div>').css(height: '75px').prependTo($body)
         $element2 = $('<div class="fixture"></div>').css(height: '100px').insertAfter($element1)
         $body.scrollTop(17)
-        { $bounds, $ghost } = up.motion.prependGhost($element2)
+        { $bounds, $ghost } = up.motion.prependCopy($element2)
         expect($bounds.css('position')).toBe('absolute')
         expect($bounds.css('top')).toEqual('75px')
         expect($ghost.css('position')).toBe('static')

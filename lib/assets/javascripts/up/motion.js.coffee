@@ -157,11 +157,8 @@ up.motion = (->
 
   withGhosts = ($old, $new, options, block) ->
 
-    # console.log("withGhosts options %o", options)
-
     oldCopy = undefined
     newCopy = undefined
-
     oldScrollTop = undefined
     newScrollTop = undefined
 
@@ -169,17 +166,17 @@ up.motion = (->
 
     u.temporaryCss $new, display: 'none', ->
       # Within this block, $new is hidden but $old is visible
-      oldCopy = prependGhost($old, $viewport)
+      oldCopy = prependCopy($old, $viewport)
       oldCopy.$ghost.addClass('up-destroying')
       oldCopy.$bounds.addClass('up-destroying')
+      # Remember the previous scroll position in case we will reveal $new below.
       oldScrollTop = $viewport.scrollTop()
       # $viewport.scrollTop(oldScrollTop + 1)
 
     u.temporaryCss $old, display: 'none', ->
       # Within this block, $old is hidden but $new is visible
-      if options.reveal
-        up.reveal($new)
-      newCopy = prependGhost($new, $viewport)
+      up.reveal($new) if options.reveal
+      newCopy = prependCopy($new, $viewport)
       newScrollTop = $viewport.scrollTop()
 
     console.log("top of oldGhost is %o, scrollTops %o / %o", oldCopy.$bounds.css('top'), oldScrollTop, newScrollTop)
@@ -193,11 +190,18 @@ up.motion = (->
 
     # Hide $old since we no longer need it.
     $old.hide()
-    # We will let $new take up space, but hide it so the
-    # ghosts above will play out the transition.
+
+    # We will let $new take up space in the element flow, but hide it.
+    # The user will only see the two animated ghosts ´until the transition
+    # is over.
     showNew = u.temporaryCss($new, visibility: 'hidden')
 
     promise = block(oldCopy.$ghost, newCopy.$ghost)
+
+    # Make a way to look at $old and $new and see if an animation is
+    # already in progress. If someone attempted a new animation on the
+    # same elements, the stored promises would be resolved by the second
+    # animation call, making the transition jump to the last frame instantly.
     $old.data(GHOSTING_PROMISE_KEY, promise)
     $new.data(GHOSTING_PROMISE_KEY, promise)
     
@@ -317,7 +321,7 @@ up.motion = (->
   ###*
   @private
   ###
-  prependGhost = ($element, $viewport) ->
+  prependCopy = ($element, $viewport) ->
     elementDims = u.measure($element, relative: true, inner: true)
 
     $ghost = $element.clone()
@@ -351,8 +355,10 @@ up.motion = (->
     $ghost.appendTo($bounds)
     $bounds.insertBefore($element)
 
-    # Make sure that we don't shift a child element with margins
-    # that can no longer collapse against a previous sibling
+    # In theory, $ghost should now sit over $element perfectly.
+    # However, $element might collapse its margin against a previous sibling
+    # element, and $ghost does not have the same sibling.
+    # So we manually correct $ghost's top position so it aligns with $element.
     moveTop($element.offset().top - $ghost.offset().top)
 
     $fixedElements = up.layout.fixedChildren($ghost)
@@ -583,7 +589,7 @@ up.motion = (->
   defaults: config.update
   none: none
   when: resolvableWhen
-  prependGhost: prependGhost
+  prependCopy: prependCopy
 
 )()
 
