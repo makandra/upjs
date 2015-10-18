@@ -37,7 +37,7 @@ describe 'up.motion', ->
 
       if up.browser.canCssAnimation()
 
-        it 'transitions between two element using ghosts', (done) ->
+        it 'transitions between two element by animating two copies while keeping the originals in the background', (done) ->
 
           $old = affix('.old').text('old content').css(
             position: 'absolute'
@@ -76,13 +76,11 @@ describe 'up.motion', ->
 
           # The actual elements are hidden, but $old will take up its original
           # space until the animation completes.
-          expect($old.css(['display', 'visibility'])).toEqual(
+          expect($old.css('display')).toEqual('none')
+
+          expect($new.css(['display', 'visibility'])).toEqual(
             display: 'block',
             visibility: 'hidden'
-          )
-          expect($new.css(['display', 'visibility'])).toEqual(
-            display: 'none',
-            visibility: 'visible'
           )
 
           # Ghosts will hover over $old and $new using absolute positioning,
@@ -124,10 +122,7 @@ describe 'up.motion', ->
 
             # The old element is still in the DOM, but hidden.
             # Morphing does *not* remove the target element.
-            expect($old.css(['display', 'visibility'])).toEqual(
-              display: 'none',
-              visibility: 'hidden'
-            )
+            expect($old.css('display')).toEqual('none')
             expect($new.css(['display', 'visibility'])).toEqual(
               display: 'block',
               visibility: 'visible'

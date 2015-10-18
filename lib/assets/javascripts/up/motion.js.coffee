@@ -192,7 +192,7 @@ up.motion = (->
     $old.hide()
 
     # We will let $new take up space in the element flow, but hide it.
-    # The user will only see the two animated ghosts ´until the transition
+    # The user will only see the two animated ghosts until the transition
     # is over.
     showNew = u.temporaryCss($new, visibility: 'hidden')
 
