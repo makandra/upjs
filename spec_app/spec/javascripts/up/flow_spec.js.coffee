@@ -118,47 +118,45 @@ describe 'up.flow', ->
 
         describe 'with { reveal: true } option', ->
 
-          describe 'revealing of elements', ->
+          beforeEach ->
+            @revealedHTML = ''
+            spyOn(up, 'reveal').and.callFake ($revealedElement) =>
+              @revealedHTML = $revealedElement.get(0).outerHTML
+              u.resolvedPromise()
 
-            beforeEach ->
-              @revealedHTML = ''
-              spyOn(up, 'reveal').and.callFake ($revealedElement) =>
-                @revealedHTML = $revealedElement.get(0).outerHTML
-                u.resolvedPromise()
+          it 'reveals a new element before it is being replaced', (done) ->
+            @request = up.replace('.middle', '/path', reveal: true)
+            @respond()
+            @request.then =>
+              expect(up.reveal).not.toHaveBeenCalledWith(@oldMiddle)
+              expect(@revealedHTML).toContain('new-middle')
+              done()
 
-            it 'reveals a new element before it is being replaced', (done) ->
-              @request = up.replace('.middle', '/path', reveal: true)
-              @respond()
-              @request.then =>
-                expect(up.reveal).not.toHaveBeenCalledWith(@oldMiddle)
-                expect(@revealedHTML).toContain('new-middle')
-                done()
+          it 'reveals a new element that is being appended', (done) ->
+            @request = up.replace('.middle:after', '/path', reveal: true)
+            @respond()
+            @request.then =>
+              expect(up.reveal).not.toHaveBeenCalledWith(@oldMiddle)
+              # Text nodes are wrapped in a .up-insertion container so we can
+              # animate them and measure their position/size for scrolling.
+              # This is not possible for container-less text nodes.
+              expect(@revealedHTML).toEqual('<span class="up-insertion">new-middle</span>')
+              # Show that the wrapper is done after the insertion.
+              expect($('.up-insertion')).not.toExist()
+              done()
 
-            it 'reveals a new element that is being appended', (done) ->
-              @request = up.replace('.middle:after', '/path', reveal: true)
-              @respond()
-              @request.then =>
-                expect(up.reveal).not.toHaveBeenCalledWith(@oldMiddle)
-                # Text nodes are wrapped in a .up-insertion container so we can
-                # animate them and measure their position/size for scrolling.
-                # This is not possible for container-less text nodes.
-                expect(@revealedHTML).toEqual('<span class="up-insertion">new-middle</span>')
-                # Show that the wrapper is done after the insertion.
-                expect($('.up-insertion')).not.toExist()
-                done()
-
-            it 'reveals a new element that is being prepended', (done) ->
-              @request = up.replace('.middle:before', '/path', reveal: true)
-              @respond()
-              @request.then =>
-                expect(up.reveal).not.toHaveBeenCalledWith(@oldMiddle)
-                # Text nodes are wrapped in a .up-insertion container so we can
-                # animate them and measure their position/size for scrolling.
-                # This is not possible for container-less text nodes.
-                expect(@revealedHTML).toEqual('<span class="up-insertion">new-middle</span>')
-                # Show that the wrapper is done after the insertion.
-                expect($('.up-insertion')).not.toExist()
-                done()
+          it 'reveals a new element that is being prepended', (done) ->
+            @request = up.replace('.middle:before', '/path', reveal: true)
+            @respond()
+            @request.then =>
+              expect(up.reveal).not.toHaveBeenCalledWith(@oldMiddle)
+              # Text nodes are wrapped in a .up-insertion container so we can
+              # animate them and measure their position/size for scrolling.
+              # This is not possible for container-less text nodes.
+              expect(@revealedHTML).toEqual('<span class="up-insertion">new-middle</span>')
+              # Show that the wrapper is done after the insertion.
+              expect($('.up-insertion')).not.toExist()
+              done()
 
       else
         
