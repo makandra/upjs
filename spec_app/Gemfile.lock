@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    upjs-rails (0.11.1)
+    upjs-rails (0.12.0)
       rails (>= 3)
 
 GEM
@@ -59,6 +59,7 @@ GEM
       xpath (~> 2.0)
     childprocess (0.5.3)
       ffi (~> 1.0, >= 1.0.11)
+    cmdparse (3.0.1)
     coffee-rails (4.1.0)
       coffee-script (>= 2.2.0)
       railties (>= 4.0.0, < 5.0)
@@ -82,6 +83,8 @@ GEM
     debug_inspector (0.0.2)
     debugger-linecache (1.2.0)
     diff-lcs (1.2.5)
+    domain_name (0.5.25)
+      unf (>= 0.0.5, < 1.0.0)
     erubis (2.7.0)
     execjs (2.2.2)
     ffi (1.9.5)
@@ -97,6 +100,7 @@ GEM
       haml (>= 3.1, < 5.0)
       html2haml (>= 1.0.1)
       railties (>= 4.0.1)
+    highline (1.7.8)
     hike (1.2.3)
     hpricot (0.8.6)
     html2haml (1.0.1)
@@ -104,13 +108,24 @@ GEM
       haml (>= 4.0.0.rc.1)
       hpricot (~> 0.8.6)
       ruby_parser (~> 3.1.1)
+    http-cookie (1.0.2)
+      domain_name (~> 0.5)
     i18n (0.7.0)
+    jasmine (2.2.0)
+      jasmine-core (~> 2.2)
+      phantomjs
+      rack (>= 1.2.1)
+      rake
     jasmine-core (2.2.0)
     jasmine-rails (0.10.7)
       jasmine-core (>= 1.3, < 3.0)
       phantomjs (< 2.0)
       railties (>= 3.1.0)
       sprockets-rails
+    jasmine_selenium_runner (0.2.1)
+      jasmine (~> 2.0)
+      sauce-connect
+      selenium-webdriver (~> 2.35)
     jquery-rails (4.0.2)
       rails-dom-testing (~> 1.0)
       railties (>= 4.2.0)
@@ -126,8 +141,16 @@ GEM
     minitest (5.5.1)
     multi_json (1.10.1)
     multi_test (0.1.1)
+    net-http-persistent (2.9.4)
+    net-ssh (3.0.1)
+    net-ssh-gateway (1.2.0)
+      net-ssh (>= 2.6.5)
+    netrc (0.10.3)
     nokogiri (1.6.6.2)
       mini_portile (~> 0.6.0)
+    parallel (1.6.1)
+    parallel_tests (1.3.7)
+      parallel
     phantomjs (1.9.8.0)
     rack (1.6.0)
     rack-test (0.6.3)
@@ -158,6 +181,10 @@ GEM
       thor (>= 0.18.1, < 2.0)
     rake (10.4.2)
     ref (1.0.5)
+    rest-client (1.8.0)
+      http-cookie (>= 1.0.2, < 2.0)
+      mime-types (>= 1.16, < 3.0)
+      netrc (~> 0.7)
     rspec-core (3.0.4)
       rspec-support (~> 3.0.0)
     rspec-expectations (3.0.4)
@@ -184,6 +211,23 @@ GEM
       sprockets (>= 2.8, < 4.0)
       sprockets-rails (>= 2.0, < 4.0)
       tilt (~> 1.1)
+    sauce (3.5.11)
+      childprocess (>= 0.1.6)
+      cmdparse (>= 2.0.2)
+      highline (>= 1.5.0)
+      json (>= 1.2.0)
+      net-http-persistent
+      net-ssh
+      net-ssh-gateway
+      parallel_tests (>= 1.1.1, <= 1.3.7)
+      rest-client
+      sauce_whisk (~> 0.0.11)
+      selenium-webdriver (>= 0.1.2)
+    sauce-connect (3.6.2)
+      sauce (~> 3.5)
+    sauce_whisk (0.0.19)
+      json (~> 1.8.1)
+      rest-client (~> 1.8.0)
     selenium-webdriver (2.42.0)
       childprocess (>= 0.5.0)
       multi_json (~> 1.0)
@@ -216,6 +260,9 @@ GEM
     uglifier (2.6.0)
       execjs (>= 0.3.0)
       json (>= 1.8.0)
+    unf (0.1.4)
+      unf_ext
+    unf_ext (0.0.7.1)
     web-console (2.0.0)
       activemodel (~> 4.0)
       binding_of_caller (>= 0.7.2)
@@ -235,7 +282,9 @@ DEPENDENCIES
   cucumber-rails
   database_cleaner
   haml-rails
+  jasmine
   jasmine-rails
+  jasmine_selenium_runner
   jquery-rails
   rails (= 4.2.0)
   rspec-rails
