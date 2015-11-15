@@ -405,6 +405,8 @@ up.layout = (($) ->
     if options.restoreScroll
       restoreScroll(around: $element)
     else if options.reveal
+      if options.source
+        throw "Parse hash, select child with that ID"
       reveal($element)
     else
       u.resolvedDeferred()

@@ -314,7 +314,7 @@ up.motion = (($) ->
     $old = $(source)
     $new = $(target)
 
-    parsedOptions = u.only(options, 'reveal', 'restoreScroll')
+    parsedOptions = u.only(options, 'reveal', 'restoreScroll', 'source')
     parsedOptions = u.extend(parsedOptions, animateOptions(options))
 
     if up.browser.canCssAnimation()
