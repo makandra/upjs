@@ -406,7 +406,11 @@ up.layout = (($) ->
       restoreScroll(around: $element)
     else if options.reveal
       if options.source
-        throw "Parse hash, select child with that ID"
+        parsed = u.parseUrl(options.source)
+        if parsed.hash && parsed.hash != '#'
+          id = parsed.hash.substr(1)
+          $target = u.findWithSelf($element, "##{id}, a[name='#{id}']")
+          $element = $target if $target.length
       reveal($element)
     else
       u.resolvedDeferred()
