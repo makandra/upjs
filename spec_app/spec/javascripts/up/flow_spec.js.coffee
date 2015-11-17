@@ -161,9 +161,9 @@ describe 'up.flow', ->
               expect(@revealedHTML).toContain('new-middle')
               done()
 
-          describe 'when there is an #anchor in the URL', ->
+          describe 'when there is an anchor #hash in the URL', ->
 
-            it 'reveals a child with the ID of that #anchor', (done) ->
+            it 'reveals a child with the ID of that #hash', (done) ->
               @request = up.replace('.middle', '/path#three', reveal: true)
               @responseText =
                 """
@@ -178,7 +178,7 @@ describe 'up.flow', ->
                 expect(@revealedHTML).toEqual('<div id="three">three</div>')
                 done()
 
-            it "reveals the entire element if it has no child with the ID of that #anchor", (done) ->
+            it "reveals the entire element if it has no child with the ID of that #hash", (done) ->
               @request = up.replace('.middle', '/path#four', reveal: true)
               @responseText =
                 """
