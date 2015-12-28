@@ -1,1 +1,1 @@
-up.form.config.validateTargets.push('.form-group:has(&)')
+up.form.config.validateTargets.unshift('.form-group:has(&)')

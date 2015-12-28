@@ -298,8 +298,8 @@ up.form = (($) ->
   resolveValidateTarget = ($field, options) ->
     target = u.option(options.target, $field.attr('up-validate'))
     if u.isBlank(target)
-      target ||= u.detect(config.validateTarget, (defaultTarget) ->
-        resolvedDefault = up.flow.resolveSelector(defaultTarget)
+      target ||= u.detect(config.validateTargets, (defaultTarget) ->
+        resolvedDefault = up.flow.resolveSelector(defaultTarget, options)
         $field.closest(resolvedDefault).length
       )
     if u.isBlank(target)
@@ -394,6 +394,8 @@ up.form = (($) ->
   By default Up.js looks for a `<fieldset>`, `<label>` or `<form>`
   around the validating input field, or any element with an
   `up-fieldset` attribute.
+  With the Bootstrap bindings, Up.js will also look
+  for a container with the `form-group` class.
 
   You can change this default behavior by setting `up.config.validateTargets`:
 
@@ -411,10 +413,10 @@ up.form = (($) ->
   validate = (fieldOrSelector, options) ->
     $field = $(fieldOrSelector)
     options = u.options(options)
+    options.origin = $field
     options.target = resolveValidateTarget($field, options)
     options.failTarget = options.target
     options.history = false
-    options.origin = $field
     options.headers = u.option(options.headers, {})
     # Make sure the X-Up-Validate header is present, so the server-side
     # knows that it should not persist the form submission
@@ -563,6 +565,8 @@ up.form = (($) ->
   By default Up.js looks for a `<fieldset>`, `<label>` or `<form>`
   around the validating input field, or any element with an
   `up-fieldset` attribute.
+  With the Bootstrap bindings, Up.js will also look
+  for a container with the `form-group` class.
 
   You can change this default behavior by setting `up.config.validateTargets`:
 
