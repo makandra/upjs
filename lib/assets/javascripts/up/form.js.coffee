@@ -1,21 +1,10 @@
 ###*
-Forms and controls
-==================
+Forms
+=====
   
-Up.js comes with functionality to submit forms without
-leaving the current page. This means you can replace page fragments,
+Up.js comes with functionality to [submit](/form-up-target) and [validate](/up-validate)
+forms without leaving the current page. This means you can replace page fragments,
 open dialogs with sub-forms, etc. all without losing form state.
-  
-\#\#\# Incomplete documentation!
-  
-We need to work on this page:
-  
-- Explain how to display form errors
-- Explain that the server needs to send 2xx or 5xx status codes so
-  Up.js can decide whether the form submission was successful
-- Explain that the server needs to send `X-Up-Location` and `X-Up-Method` headers
-  if an successful form submission resulted in a redirect
-- Examples
 
 @class up.form
 ###
@@ -45,15 +34,16 @@ up.form = (($) ->
   ###*
   Submits a form via AJAX and updates a page fragment with the response.
 
-      up.submit('form.new-user')
+      up.submit('form.new-user', { target: '.main' })
   
   Instead of loading a new page, the form is submitted via AJAX.
   The response is parsed for a CSS selector and the matching elements will
   replace corresponding elements on the current page.
 
-  The `<form>` element will be assigned a CSS class `up-active` while
-  the submission is loading.
-  
+  The UJS variant of this is the [`form[up-target]`](/form-up-target) selector.
+  See the documentation for [`form[up-target]`](/form-up-target) for more
+  information on how AJAX form submissions work in Up.js.
+
   @function up.submit
   @param {Element|jQuery|String} formOrSelector
     A reference or selector for the form to submit.
@@ -120,6 +110,7 @@ up.form = (($) ->
     successTransition = u.option(options.transition, u.castedAttr($form, 'up-transition'))
     failureTransition = u.option(options.failTransition, u.castedAttr($form, 'up-fail-transition'), successTransition)
     httpMethod = u.option(options.method, $form.attr('up-method'), $form.attr('data-method'), $form.attr('method'), 'post').toUpperCase()
+    headers = u.option(options.headers, {})
 
     implantOptions = {}
     implantOptions.reveal = u.option(options.reveal, u.castedAttr($form, 'up-reveal'), true)
@@ -130,12 +121,21 @@ up.form = (($) ->
 
     useCache = u.option(options.cache, u.castedAttr($form, 'up-cache'))
     url = u.option(options.url, $form.attr('action'), up.browser.url())
-    
+
+    hasFileInputs = $form.find('input[type=file]').length
+
+    if options.validate
+      headers['X-Up-Validate'] = options.validate
+      # Since we cannot (yet) submit file inputs via AJAX, we cannot
+      # offer inline validation for such forms.
+      if hasFileInputs
+        return u.unresolvablePromise()
+
     $form.addClass('up-active')
-    
-    if !up.browser.canPushState() && historyOption != false
+
+    if hasFileInputs || (!up.browser.canPushState() && historyOption != false)
       $form.get(0).submit()
-      return
+      return u.unresolvablePromise()
 
     request = {
       url: url
@@ -143,7 +143,7 @@ up.form = (($) ->
       data: $form.serialize()
       selector: successSelector
       cache: useCache
-      headers: options.headers
+      headers: headers
     }
 
     successUrl = (xhr) ->
@@ -316,99 +316,20 @@ up.form = (($) ->
   HTTP header. Upon seeing this header, the server is expected to validate (but not save)
   the form submission and render a new copy of the form with validation errors.
 
-  The UJS variant of this is the [`up-validate`](/up-validate) attribute.
+  The UJS variant of this is the [`[up-validate]`](/up-validate) selector.
+  See the documentation for [`[up-validate]`](/up-validate) for more information
+  on how server-side validation works in Up.js.
 
   \#\#\#\# Example
-
-  Let's look at a standard registration form that asks for an e-mail and password:
-
-      <form action="/users">
-
-        <label>
-          E-mail: <input type="text" name="email" />
-        </label>
-
-        <label>
-          Password: <input type="password" name="password" />
-        </label>
-
-        <button type="submit">Register</button>
-
-      </form>
-
-  When the user changes the `email` field, we want to validate that
-  the e-mail address is valid and still available.
-
-      up.validate('input[name=email]')
-
-  This POSTs the form to `/users` with an additional `X-Up-Validate`
-  HTTP header. Upon seeing this header, the server is expected to validate (but not save)
-  the form submission and render a new copy of the form with validation errors.
-
-  In Ruby on Rails the processing action should behave like this:
-
-      class UsersController < ApplicationController
-
-        # This action handles POST /users
-        def create
-          user_params = params[:user].permit(:email, :password)
-          @user = User.new(user_params)
-          if request.headers['X-Up-Validate']
-            @user.valid?  # run validations, but don't save to the database
-            render 'form' # render form with error messages
-          elsif @user.save?
-            sign_in @user
-          else
-            render 'form', status: :bad_request
-          end
-        end
-
-      end
-
-  Note that if you're using the `upjs-rails` gem you can simply say `up.validate?`
-  instead of manually checking for `request.headers['X-Up-Validate']`.
-
-  The server now renders an updated copy of the form with eventual validation errors:
-
-      <form action="/users">
-
-        <label class="has-error">
-          E-mail: <input type="text" name="email" value="foo@bar.com" />
-          Has already been taken!
-        </label>
-
-        <button type="submit">Register</button>
-
-      </form>
-
-  The `<label>` around the e-mail field is now updated to have the `has-error`
-  class and display the validation message.
-
-  \#\#\#\# How validation results are displayed
-
-  Although the server will usually respond to a validation with a complete,
-  fresh copy of the form, Up.js will by default not update the entire form.
-  This is done in order to preserve volatile state such as the scroll position
-  of `<textarea>` elements.
-
-  By default Up.js looks for a `<fieldset>`, `<label>` or `<form>`
-  around the validating input field, or any element with an
-  `up-fieldset` attribute.
-  With the Bootstrap bindings, Up.js will also look
-  for a container with the `form-group` class.
-
-  You can change this default behavior by setting `up.config.validateTargets`:
-
-      // Always update the entire form containing the current field ("&")
-      up.config.validateTargets = ['form &']
-
-  You can also individually override what to update using the `target` option:
 
       up.validate('input[name=email]', { target: '.email-errors' })
 
   @function up.validate
   @param {String|Element|jQuery} fieldOrSelector
   @param {String|Element|jQuery} [options.target]
+  @return {Promise}
+    A promise that is resolved when the server-side
+    validation is received and the form was updated.
   ###
   validate = (fieldOrSelector, options) ->
     $field = $(fieldOrSelector)
@@ -420,19 +341,78 @@ up.form = (($) ->
     options.headers = u.option(options.headers, {})
     # Make sure the X-Up-Validate header is present, so the server-side
     # knows that it should not persist the form submission
-    options.headers['X-Up-Validate'] = $field.attr('name') || '__none__'
+    options.validate = ($field.attr('name') || '__none__')
     options = u.merge(options, up.motion.animateOptions(options, $field))
     $form = $field.closest('form')
     promise = up.submit($form, options)
     promise
 
   ###*
-  Submits the form through AJAX, searches the response for the selector
-  given in `up-target` and [replaces](/up.replace) the selector content in the current page:
+  Forms with an `up-target` attribute are [submitted via AJAX](/up.submit)
+  instead of triggering a full page reload.
 
       <form method="post" action="/users" up-target=".main">
         ...
       </form>
+
+  The server response is searched for the selector given in `up-target`.
+  The selector content is then [replaced](/up.replace) in the current page.
+
+  The programmatic variant of this is the [`up.submit`](/up.submit) function.
+
+  \#\#\#\# Validation errors
+
+  When the server was unable to save the form due to invalid data,
+  it will usually re-render an updated copy of the form with
+  validation messages.
+
+  For Up.js to be able to pick up a validation failure,
+  the form must be re-rendered with a non-200 HTTP status code.
+  We recommend to use either 400 (bad request) or
+  422 (unprocessable entity).
+
+  In Ruby on Rails, you can pass a
+  [`:status` option to `render`](http://guides.rubyonrails.org/layouts_and_rendering.html#the-status-option)
+  for this:
+
+      class UsersController < ApplicationController
+
+        def create
+          user_params = params[:user].permit(:email, :password)
+          @user = User.new(user_params)
+          if @user.save?
+            sign_in @user
+          else
+            render 'form', status: :bad_request
+          end
+        end
+
+      end
+
+  Note that you can also use the
+  [`up-validate`](/up-validate) attribute to perform server-side
+  validations while the user is completing fields.
+
+  \#\#\#\# Redirects
+
+  Up.js requires two additional response headers to detect redirects,
+  which are otherwise undetectable for an AJAX client.
+
+  When the form's action performs a redirect, the server should echo
+  the new request's URL as a response header `X-Up-Location`
+  and the request's HTTP method as `X-Up-Method`.
+
+  If you are using Up.js via the `upjs-rails` gem, these headers
+  are set automatically for every request.
+
+  \#\#\#\# Giving feedback while the form is processing
+
+  The `<form>` element will be assigned a CSS class `up-active` while
+  the submission is loading.
+
+  You can also [implement a spinner](/up.proxy/#spinners)
+  by [listening](/up.on) to the [`up:proxy:busy`](/up:proxy:busy)
+  and [`up:proxy:idle`](/up:proxy:idle) events.
 
   @selector form[up-target]
   @param {String} up-target
@@ -497,7 +477,7 @@ up.form = (($) ->
   change the `password` field for the minimum required password length.
   We can do this by giving both fields an `up-validate` attribute:
 
-    <form action="/users">
+      <form action="/users">
 
         <label>
           E-mail: <input type="text" name="email" up-validate />
