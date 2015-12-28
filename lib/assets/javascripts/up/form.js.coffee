@@ -175,7 +175,11 @@ up.form = (($) ->
   Observes a form field and runs a callback when its value changes.
   This is useful for observing text fields while the user is typing.
 
-  For instance, the following would submit the form whenever the
+  The UJS variant of this is the [`up-observe`](/up-observe) attribute.
+
+  \#\#\#\# Example
+
+  The following would submit the form whenever the
   text field value changes:
 
       up.observe('input[name=query]', { change: function(value, $input) {
@@ -305,14 +309,18 @@ up.form = (($) ->
     target
 
   ###*
-  Performs a server-side validation of a form and
-  update the form with validation messages.
+  Performs a server-side validation of a form and update the form
+  with validation messages.
 
   `up.validate` submits the given field's form with an additional `X-Up-Validate`
   HTTP header. Upon seeing this header, the server is expected to validate (but not save)
   the form submission and render a new copy of the form with validation errors.
 
+  The UJS variant of this is the [`up-validate`](/up-validate) attribute.
+
   \#\#\#\# Example
+
+  Let's look at a standard registration form that asks for an e-mail and password:
 
       <form action="/users">
 
@@ -324,36 +332,61 @@ up.form = (($) ->
           Password: <input type="password" name="password" />
         </label>
 
+        <button type="submit">Register</button>
+
       </form>
 
-  We call:
+  When the user changes the `email` field, we want to validate that
+  the e-mail address is valid and still available.
 
       up.validate('input[name=email]')
 
-  On Rails with upjs-rails gem:
+  This POSTs the form to `/users` with an additional `X-Up-Validate`
+  HTTP header. Upon seeing this header, the server is expected to validate (but not save)
+  the form submission and render a new copy of the form with validation errors.
+
+  In Ruby on Rails the processing action should behave like this:
 
       class UsersController < ApplicationController
 
         # This action handles POST /users
         def create
-          @user = User.new(params[:user])
+          user_params = params[:user].permit(:email, :password)
+          @user = User.new(user_params)
           if request.headers['X-Up-Validate']
-            @user.valid?    # run validations, but don't save to the database
-            render 'form'    # render form with error messages
+            @user.valid?  # run validations, but don't save to the database
+            render 'form' # render form with error messages
           elsif @user.save?
             sign_in @user
           else
             render 'form', status: :bad_request
           end
         end
+
       end
 
-  Note that with the upjs-rails gem you can say `up.validate?`
+  Note that if you're using the `upjs-rails` gem you can simply say `up.validate?`
   instead of manually checking for `request.headers['X-Up-Validate']`.
+
+  The server now renders an updated copy of the form with eventual validation errors:
+
+      <form action="/users">
+
+        <label class="has-error">
+          E-mail: <input type="text" name="email" value="foo@bar.com" />
+          Has already been taken!
+        </label>
+
+        <button type="submit">Register</button>
+
+      </form>
+
+  The `<label>` around the e-mail field is now updated to have the `has-error`
+  class and display the validation message.
 
   \#\#\#\# How validation results are displayed
 
-  Although the server will usually respond to a validation with a complete
+  Although the server will usually respond to a validation with a complete,
   fresh copy of the form, Up.js will by default not update the entire form.
   This is done in order to preserve volatile state such as the scroll position
   of `<textarea>` elements.
@@ -370,23 +403,6 @@ up.form = (($) ->
   You can also individually override what to update using the `target` option:
 
       up.validate('input[name=email]', { target: '.email-errors' })
-
-  \#\#\#\# Fields that are dependent on each other
-
-      <form action="/contracts">
-        <select name="department_id">...</select> <!-- options for all departments -->
-        <select name="employee_id">...</select> <!-- options for all employees of selected department -->
-      </form>
-
-
-      <%= form_for @contract do |form| %>
-        <%= form.collection_select :department_id, Department.all, :id, :name %>
-        <%= form.collection_select :employee_id, @contract.department.employees, :id, :name %>
-      <% end %>
-
-  ...
-
-      up.validate('[name=department]', { target: '[name=employees]' })
 
   @function up.validate
   @param {String|Element|jQuery} fieldOrSelector
@@ -450,9 +466,144 @@ up.form = (($) ->
     submit($form)
 
   ###*
-  ...
+  When a form field with this attribute is changed,
+  the form is validated on the server and is updated with
+  validation messages.
+
+  The programmatic variant of this is the [`up.validate`](/up.validate) function.
+
+  \#\#\#\# Example
+
+  Let's look at a standard registration form that asks for an e-mail and password:
+
+      <form action="/users">
+
+        <label>
+          E-mail: <input type="text" name="email" />
+        </label>
+
+        <label>
+          Password: <input type="password" name="password" />
+        </label>
+
+        <button type="submit">Register</button>
+
+      </form>
+
+  When the user changes the `email` field, we want to validate that
+  the e-mail address is valid and still available. Also we want to
+  change the `password` field for the minimum required password length.
+  We can do this by giving both fields an `up-validate` attribute:
+
+    <form action="/users">
+
+        <label>
+          E-mail: <input type="text" name="email" up-validate />
+        </label>
+
+        <label>
+          Password: <input type="password" name="password" up-validate />
+        </label>
+
+        <button type="submit">Register</button>
+
+      </form>
+
+  Whenever a field with `up-validate` changes, the form is POSTed to
+  `/users` with an additional `X-Up-Validate` HTTP header.
+  Upon seeing this header, the server is expected to validate (but not save)
+  the form submission and render a new copy of the form with validation errors.
+
+  In Ruby on Rails the processing action should behave like this:
+
+      class UsersController < ApplicationController
+
+        # This action handles POST /users
+        def create
+          user_params = params[:user].permit(:email, :password)
+          @user = User.new(user_params)
+          if request.headers['X-Up-Validate']
+            @user.valid?  # run validations, but don't save to the database
+            render 'form' # render form with error messages
+          elsif @user.save?
+            sign_in @user
+          else
+            render 'form', status: :bad_request
+          end
+        end
+
+      end
+
+  Note that if you're using the `upjs-rails` gem you can simply say `up.validate?`
+  instead of manually checking for `request.headers['X-Up-Validate']`.
+
+  The server now renders an updated copy of the form with eventual validation errors:
+
+      <form action="/users">
+
+        <label class="has-error">
+          E-mail: <input type="text" name="email" value="foo@bar.com" />
+          Has already been taken!
+        </label>
+
+        <button type="submit">Register</button>
+
+      </form>
+
+  The `<label>` around the e-mail field is now updated to have the `has-error`
+  class and display the validation message.
+
+  \#\#\#\# How validation results are displayed
+
+  Although the server will usually respond to a validation with a complete,
+  fresh copy of the form, Up.js will by default not update the entire form.
+  This is done in order to preserve volatile state such as the scroll position
+  of `<textarea>` elements.
+
+  By default Up.js looks for a `<fieldset>`, `<label>` or `<form>`
+  around the validating input field, or any element with an
+  `up-fieldset` attribute.
+
+  You can change this default behavior by setting `up.config.validateTargets`:
+
+      // Always update the entire form containing the current field ("&")
+      up.config.validateTargets = ['form &']
+
+  You can also individually override what to update by setting the `up-validate`
+  attribute to a CSS selector:
+
+      <input type="text" name="email" up-validate=".email-errors">
+      <span class="email-errors"></span>
+
+
+  \#\#\#\# Updating dependent fields
+
+  The `[up-validate]` behavior is also a great way to partially update a form
+  when one fields depends on the value of another field.
+
+  Let's say you have a form with one `<select>` to pick a department (sales, engineering, ...)
+  and another `<select>` to pick an employeee from the selected department:
+
+      <form action="/contracts">
+        <select name="department">...</select> <!-- options for all departments -->
+        <select name="employeed">...</select> <!-- options for employees of selected department -->
+      </form>
+
+  The list of employees needs to be updated as the appartment changes:
+
+      <form action="/contracts">
+        <select name="department" up-validate="[name=employee]">...</select>
+        <select name="employee">...</select>
+      </form>
+
+  In order to update the `department` field in addition to the `employee` field, you could say
+  `up-validate="&, [name=employee]"`, or simply `up-validate="form"` to update the entire form.
 
   @selector [up-validate]
+  @param {String} up-validate
+    The CSS selector to update with the server response.
+
+    This defaults to a fieldset or form group around the validating field.
   ###
   up.on 'change', '[up-validate]', (event, $field) ->
     validate($field)
@@ -462,6 +613,10 @@ up.form = (($) ->
   when its value changes. This is useful for observing text fields
   while the user is typing.
 
+  The programmatic variant of this is the [`up.observe`](/up.observe) function.
+
+  \#\#\#\# Example
+
   For instance, the following would submit the form whenever the
   text field value changes:
 
@@ -469,7 +624,7 @@ up.form = (($) ->
         <input type="query" up-observe="up.form.submit(this)">
       </form>
 
-  The script given with `up-observe` runs with the following context:
+  The script given to `up-observe` runs with the following context:
 
   | Name     | Type      | Description                           |
   | -------- | --------- | ------------------------------------- |
@@ -477,11 +632,9 @@ up.form = (($) ->
   | `this`   | `Element` | The form field                        |
   | `$field` | `jQuery`  | The form field as a jQuery collection |
 
-  See up.observe.
-
-  @selector input[up-observe]
-    The code to run when the field's value changes.
+  @selector [up-observe]
   @param {String} up-observe
+    The code to run when the field's value changes.
   ###
   up.compiler '[up-observe]', ($field) ->
     return observe($field)
