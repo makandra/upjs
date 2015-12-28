@@ -130,3 +130,6 @@ describe 'up.form', ->
         expect($group.length).toBe(1)
         expect($group).toHaveClass('has-error')
         expect($group).toHaveText('Username has already been taken')
+
+      it 'finds a form group around the input field', ->
+        expect(1).toBe(2)

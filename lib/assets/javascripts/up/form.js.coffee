@@ -24,13 +24,35 @@ up.form = (($) ->
   u = up.util
 
   ###*
-  Submits a form using the Up.js flow:
-  
-      up.submit('form.new_user')
+  Sets default options for form submission and validation.
+
+  @property up.form.config
+  @param {Array} [config.validateTargets=['[up-fieldset]:has(&)', 'fieldset:has(&)', 'label:has(&)', 'form:has(&)']]
+    An array of CSS selectors that are searched around a form field
+    that wants to [validate](/up.validate). The first matching selector
+    will be updated with the validation messages from the server.
+
+    By default this looks for a `<fieldset>`, `<label>` or `<form>`
+    around the validating input field, or any element with an
+    `up-fieldset` attribute.
+  ###
+  config = u.config
+    validateTargets: ['[up-fieldset]:has(&)', 'fieldset:has(&)', 'label:has(&)', 'form:has(&)']
+
+  reset = ->
+    config.reset()
+
+  ###*
+  Submits a form via AJAX and updates a page fragment with the response.
+
+      up.submit('form.new-user')
   
   Instead of loading a new page, the form is submitted via AJAX.
   The response is parsed for a CSS selector and the matching elements will
   replace corresponding elements on the current page.
+
+  The `<form>` element will be assigned a CSS class `up-active` while
+  the submission is loading.
   
   @function up.submit
   @param {Element|jQuery|String} formOrSelector
@@ -269,7 +291,103 @@ up.form = (($) ->
     # return destructor
     return clearTimer
 
+  resolveValidateTarget = ($field, options) ->
+    target = u.option(options.target, $field.attr('up-validate'))
+    if u.isBlank(target)
+      target ||= u.detect(config.validateTarget, (defaultTarget) ->
+        resolvedDefault = up.flow.resolveSelector(defaultTarget)
+        $field.closest(resolvedDefault).length
+      )
+    if u.isBlank(target)
+      error('Could not find default validation target for %o (tried ancestors %o)', $field, config.validateTargets)
+    unless u.isString(target)
+      target = u.createSelectorFromElement(target)
+    target
+
   ###*
+  Performs a server-side validation of a form and
+  update the form with validation messages.
+
+  `up.validate` submits the given field's form with an additional `X-Up-Validate`
+  HTTP header. Upon seeing this header, the server is expected to validate (but not save)
+  the form submission and render a new copy of the form with validation errors.
+
+  \#\#\#\# Example
+
+      <form action="/users">
+
+        <label>
+          E-mail: <input type="text" name="email" />
+        </label>
+
+        <label>
+          Password: <input type="password" name="password" />
+        </label>
+
+      </form>
+
+  We call:
+
+      up.validate('input[name=email]')
+
+  On Rails with upjs-rails gem:
+
+      class UsersController < ApplicationController
+
+        # This action handles POST /users
+        def create
+          @user = User.new(params[:user])
+          if request.headers['X-Up-Validate']
+            @user.valid?    # run validations, but don't save to the database
+            render 'form'    # render form with error messages
+          elsif @user.save?
+            sign_in @user
+          else
+            render 'form', status: :bad_request
+          end
+        end
+      end
+
+  Note that with the upjs-rails gem you can say `up.validate?`
+  instead of manually checking for `request.headers['X-Up-Validate']`.
+
+  \#\#\#\# How validation results are displayed
+
+  Although the server will usually respond to a validation with a complete
+  fresh copy of the form, Up.js will by default not update the entire form.
+  This is done in order to preserve volatile state such as the scroll position
+  of `<textarea>` elements.
+
+  By default Up.js looks for a `<fieldset>`, `<label>` or `<form>`
+  around the validating input field, or any element with an
+  `up-fieldset` attribute.
+
+  You can change this default behavior by setting `up.config.validateTargets`:
+
+      // Always update the entire form containing the current field ("&")
+      up.config.validateTargets = ['form &']
+
+  You can also individually override what to update using the `target` option:
+
+      up.validate('input[name=email]', { target: '.email-errors' })
+
+  \#\#\#\# Fields that are dependent on each other
+
+      <form action="/contracts">
+        <select name="department_id">...</select> <!-- options for all departments -->
+        <select name="employee_id">...</select> <!-- options for all employees of selected department -->
+      </form>
+
+
+      <%= form_for @contract do |form| %>
+        <%= form.collection_select :department_id, Department.all, :id, :name %>
+        <%= form.collection_select :employee_id, @contract.department.employees, :id, :name %>
+      <% end %>
+
+  ...
+
+      up.validate('[name=department]', { target: '[name=employees]' })
+
   @function up.validate
   @param {String|Element|jQuery} fieldOrSelector
   @param {String|Element|jQuery} [options.target]
@@ -277,15 +395,14 @@ up.form = (($) ->
   validate = (fieldOrSelector, options) ->
     $field = $(fieldOrSelector)
     options = u.options(options)
-    options.target = u.option(options.target, $field.attr('up-validate'), fieldOrSelector)
-    options.target = u.createSelectorFromElement(options.target) unless u.isString(options.target)
+    options.target = resolveValidateTarget($field, options)
     options.failTarget = options.target
     options.history = false
     options.origin = $field
     options.headers = u.option(options.headers, {})
     # Make sure the X-Up-Validate header is present, so the server-side
     # knows that it should not persist the form submission
-    options.headers['X-Up-Validate'] = $field.attr('name') || '1'
+    options.headers['X-Up-Validate'] = $field.attr('name') || '__none__'
     options = u.merge(options, up.motion.animateOptions(options, $field))
     $form = $field.closest('form')
     promise = up.submit($form, options)
@@ -377,10 +494,15 @@ up.form = (($) ->
 #        $field.removeClass('up-active')
 #    )
 
+  up.on 'up:framework:reset', reset
+
   submit: submit
   observe: observe
+  validate: validate
 
 )(jQuery)
 
 up.submit = up.form.submit
 up.observe = up.form.observe
+up.validate = up.form.validate
+
