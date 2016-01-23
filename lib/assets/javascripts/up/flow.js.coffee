@@ -507,6 +507,7 @@ up.flow = (($) ->
     setSource(document.body, up.browser.url())
   )
 
+  knife: eval(Knife?.point)
   replace: replace
   reload: reload
   destroy: destroy

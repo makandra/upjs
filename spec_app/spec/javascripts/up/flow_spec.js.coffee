@@ -21,7 +21,7 @@ describe 'up.flow', ->
             <div class="after">new-after</div>
             """
 
-          @respond = -> @respondWith(@responseText)
+          @respond = (options = {}) -> @respondWith(@responseText, options)
 
         it 'replaces the given selector with the same selector from a freshly fetched page', (done) ->
           promise = up.replace('.middle', '/path')
@@ -32,13 +32,40 @@ describe 'up.flow', ->
             expect($('.after')).toHaveText('old-after')
             done()
 
+        describe 'with { data } option', ->
+
+          it "uses the given params as a non-GET request's payload", ->
+            givenParams = { 'foo-key': 'foo-value', 'bar-key': 'bar-value' }
+            up.replace('.middle', '/path', method: 'put', data: givenParams)
+            expect(@lastRequest.data).toBe(givenParams)
+
+          it "encodes the given params into the URL of a GET request", ->
+            givenParams = { 'foo-key': 'foo value', 'bar-key': 'bar value' }
+            up.replace('.middle', '/path', method: 'put', data: givenParams)
+            expect(@lastRequest.url).toBe('/path?foo-key=foo+value&bar-key=bar+value')
+
+        it 'uses a HTTP method given as { method } option', ->
+          up.replace('.middle', '/path', method: 'put')
+          expect(@lastRequest.method).toBe('PUT')
+
         describe 'if the server responds with a non-200 status code', ->
 
-          it 'replaces the <body> instead of the given selector'
+          it 'replaces the <body> instead of the given selector', ->
+            implantSpy = up.flow.knife.mock('implant') # can't have the example replace the Jasmine test runner UI
+            up.replace('.middle', '/path')
+            @respond()
+            expect(implantSpy).toHaveBeenCalledWith('body', jasmine.any(String))
 
-          it 'uses a target selector given as { failTarget } option'
+          it 'uses a target selector given as { failTarget } option', ->
+            up.replace('.middle', '/path', failTarget: '.after')
+            @respond(status: 500)
+            expect($('.middle')).toHaveText('old-middle')
+            expect($('.after')).toHaveText('new-after')
 
         describe 'history', ->
+
+          beforeEach ->
+            @oldPathname = window.location.pathname
 
           it 'should set the browser location to the given URL', (done) ->
             promise = up.replace('.middle', '/path')
@@ -47,20 +74,47 @@ describe 'up.flow', ->
               expect(window.location.pathname).toBe('/path')
               done()
 
-          it 'does not add a history entry after non-GET requests'
+          it 'does not add a history entry after non-GET requests', ->
+            promise = up.replace('.middle', '/path', method: 'post')
+            @respond(failTarget: '.middle')
+            expect(window.location.pathname).toBe(@oldPathname)
 
-          it 'adds a history entry after a non-GET request if an URL is given as { history } option'
+          it 'adds a history entry after non-GET requests if the response includes a { X-Up-Method: "get" } header (will happen after a redirect)', ->
+            promise = up.replace('.middle', '/path', method: 'post')
+            @respond(failTarget: '.middle', responseHeaders: { 'X-Up-Method': 'get' })
+            expect(window.location.pathname).toBe('/path')
 
-          it 'adds a history entry if a GET-request failed'
+          describe 'if a URL is given as { history } option', ->
 
-          it 'does not add a history entry with { history: false } option'
+            it 'adds a history entry after a non-GET request', ->
+              promise = up.replace('.middle', '/path', method: 'post', history: '/given-path')
+              @respond(failTarget: '.middle')
+              expect(window.location.pathname).toBe('/given-path')
 
-          it "detects a redirect's new URL when the server sets an X-Up-Location header", (done) ->
+            it 'does not add a history entry after a failed non-GET request', ->
+              promise = up.replace('.middle', '/path', method: 'post', history: '/given-path')
+              @respond(failTarget: '.middle', status: 500)
+              expect(window.location.pathname).toBe(@oldPathname)
+
+          it 'adds a history entry if a GET-request failed', ->
+            promise = up.replace('.middle', '/path', method: 'post')
+            @respond(failTarget: '.middle', status: 500)
+            expect(window.location.pathname).toBe('/path')
+
+          it 'does not add a history entry with { history: false } option', ->
+            promise = up.replace('.middle', '/path', history: false)
+            @respond()
+            expect(window.location.pathname).toBe(@oldPathname)
+
+          it "detects a redirect's new URL when the server sets an X-Up-Location header", ->
             promise = up.replace('.middle', '/path')
-            @respondWith(@responseText, responseHeaders: { 'X-Up-Location': '/other-path' })
-            promise.then ->
-              expect(window.location.pathname).toBe('/other-path')
-              done()
+            @respond(responseHeaders: { 'X-Up-Location': '/other-path' })
+            expect(window.location.pathname).toBe('/other-path')
+
+          it 'adds query params given as { data } option to the URL of a GET request', ->
+            promise = up.replace('.middle', '/path', data: { 'foo-key': 'foo value', 'bar-key': 'bar value' })
+            @respond()
+            expect(window.location.pathname).toBe('/other-path?foo-key=foo+value&bar-key=bar+value')
 
         describe 'source', ->
 
@@ -71,8 +125,12 @@ describe 'up.flow', ->
               expect($('.middle').attr('up-source')).toMatch(/\/path$/)
               done()
 
-          it 'reuses the previous source for a non-GET request (since that is reloadable)'
-
+          it 'reuses the previous source for a non-GET request (since that is reloadable)', ->
+            @oldMiddle.attr('up-source', '/previous-source')
+            up.replace('.middle', '/path', method: 'post')
+            @respond()
+            expect($('.middle')).toHaveText('new-middle')
+            expect($('.middle').attr('up-source')).toBe('/previous-source')
 
         it 'understands non-standard CSS selector extensions such as :has(...)', (done) ->
           $first = affix('.boxx#first')
