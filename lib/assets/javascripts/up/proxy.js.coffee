@@ -228,6 +228,8 @@ up.proxy = (($) ->
   @param {Object} [request.headers={}]
     An object of additional header key/value pairs to send along
     with the request.
+  @param {Object} [request.data={}]
+    An object of request parameters.
   @return
     A promise for the response that is API-compatible with the
     promise returned by [`jQuery.ajax`](http://api.jquery.com/jquery.ajax/).

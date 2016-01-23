@@ -121,8 +121,10 @@ up.flow = (($) ->
     here, in which case a selector will be inferred from the element's class and ID.
   @param {String} url
     The URL to fetch from the server.
-  @param {String} [options.method='get']
   @param {String} [options.title]
+  @param {String} [options.method='get']
+  @param {Object} [options.data]
+    An object of request parameters.
   @param {String} [options.transition='none']
   @param {String|Boolean} [options.history=true]
     If a `String` is given, it is used as the URL the browser's location bar and history.
@@ -168,6 +170,7 @@ up.flow = (($) ->
     request =
       url: url
       method: options.method
+      data: options.data
       selector: selector
       cache: options.cache
       preload: options.preload

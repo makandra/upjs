@@ -37,16 +37,16 @@ describe 'up.flow', ->
           it "uses the given params as a non-GET request's payload", ->
             givenParams = { 'foo-key': 'foo-value', 'bar-key': 'bar-value' }
             up.replace('.middle', '/path', method: 'put', data: givenParams)
-            expect(@lastRequest.data).toBe(givenParams)
+            expect(@lastRequest().data()).toEqual('foo-key': ['foo-value'], 'bar-key': ['bar-value'])
 
           it "encodes the given params into the URL of a GET request", ->
             givenParams = { 'foo-key': 'foo value', 'bar-key': 'bar value' }
-            up.replace('.middle', '/path', method: 'put', data: givenParams)
-            expect(@lastRequest.url).toBe('/path?foo-key=foo+value&bar-key=bar+value')
+            up.replace('.middle', '/path', method: 'get', data: givenParams)
+            expect(@lastRequest().url).toEndWith('/path?foo-key=foo+value&bar-key=bar+value')
 
         it 'uses a HTTP method given as { method } option', ->
           up.replace('.middle', '/path', method: 'put')
-          expect(@lastRequest.method).toBe('PUT')
+          expect(@lastRequest().method).toEqual('PUT')
 
         describe 'if the server responds with a non-200 status code', ->
 
