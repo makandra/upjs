@@ -31,20 +31,48 @@ describe 'up.flow', ->
             expect($('.middle')).toHaveText('new-middle')
             expect($('.after')).toHaveText('old-after')
             done()
-          
-        it 'should set the browser location to the given URL', (done) ->
-          promise = up.replace('.middle', '/path')
-          @respond()
-          promise.then ->
-            expect(window.location.pathname).toBe('/path')
-            done()
 
-        it "detects a redirect's new URL when the server sets an X-Up-Location header", (done) ->
-          promise = up.replace('.middle', '/path')
-          @respondWith(@responseText, responseHeaders: { 'X-Up-Location': '/other-path' })
-          promise.then ->
-            expect(window.location.pathname).toBe('/other-path')
-            done()
+        describe 'if the server responds with a non-200 status code', ->
+
+          it 'replaces the <body> instead of the given selector'
+
+          it 'uses a target selector given as { failTarget } option'
+
+        describe 'history', ->
+
+          it 'should set the browser location to the given URL', (done) ->
+            promise = up.replace('.middle', '/path')
+            @respond()
+            promise.then ->
+              expect(window.location.pathname).toBe('/path')
+              done()
+
+          it 'does not add a history entry after non-GET requests'
+
+          it 'adds a history entry after a non-GET request if an URL is given as { history } option'
+
+          it 'adds a history entry if a GET-request failed'
+
+          it 'does not add a history entry with { history: false } option'
+
+          it "detects a redirect's new URL when the server sets an X-Up-Location header", (done) ->
+            promise = up.replace('.middle', '/path')
+            @respondWith(@responseText, responseHeaders: { 'X-Up-Location': '/other-path' })
+            promise.then ->
+              expect(window.location.pathname).toBe('/other-path')
+              done()
+
+        describe 'source', ->
+
+          it 'remembers the source the fragment was retrieved from', (done) ->
+            promise = up.replace('.middle', '/path')
+            @respond()
+            promise.then ->
+              expect($('.middle').attr('up-source')).toMatch(/\/path$/)
+              done()
+
+          it 'reuses the previous source for a non-GET request (since that is reloadable)'
+
 
         it 'understands non-standard CSS selector extensions such as :has(...)', (done) ->
           $first = affix('.boxx#first')
@@ -64,82 +92,79 @@ describe 'up.flow', ->
             expect($('#second span')).toHaveText('old second')
             done()
 
-        it 'marks the element with the URL from which it was retrieved', (done) ->
-          promise = up.replace('.middle', '/path')
-          @respond()
-          promise.then ->
-            expect($('.middle').attr('up-source')).toMatch(/\/path$/)
-            done()
-            
-        it 'replaces multiple selectors separated with a comma', (done) ->
-          promise = up.replace('.middle, .after', '/path')
-          @respond()
-          promise.then ->
-            expect($('.before')).toHaveText('old-before')
-            expect($('.middle')).toHaveText('new-middle')
-            expect($('.after')).toHaveText('new-after')
-            done()
+        describe 'document title', ->
 
-        it 'replaces the body if asked to replace the "html" selector'
+          it "sets the document title to a 'title' tag in the response", ->
+            affix('.container').text('old container text')
+            up.replace('.container', '/path')
+            @respondWith """
+              <html>
+                <head>
+                  <title>Title from HTML</title>
+                </head>
+                <body>
+                  <div class='container'>
+                    new container text
+                  </div>
+                </body>
+              </html>
+            """
+            expect($('.container')).toHaveText('new container text')
+            expect(document.title).toBe('Title from HTML')
 
-        it "sets the document title to a 'title' tag in the response", ->
-          affix('.container').text('old container text')
-          up.replace('.container', '/path')
-          @respondWith """
-            <html>
-              <head>
-                <title>Title from HTML</title>
-              </head>
-              <body>
+          it "sets the document title to an 'X-Up-Title' header in the response", ->
+            affix('.container').text('old container text')
+            up.replace('.container', '/path')
+            @respondWith
+              responseHeaders:
+                'X-Up-Title': 'Title from header'
+              responseText: """
                 <div class='container'>
                   new container text
                 </div>
-              </body>
-            </html>
-          """
-          expect($('.container')).toHaveText('new container text')
-          expect(document.title).toBe('Title from HTML')
+                """
+            expect($('.container')).toHaveText('new container text')
+            expect(document.title).toBe('Title from header')
 
-        it "sets the document title to an 'X-Up-Title' header in the response", ->
-          affix('.container').text('old container text')
-          up.replace('.container', '/path')
-          @respondWith
-            responseHeaders:
-              'X-Up-Title': 'Title from header'
-            responseText: """
-              <div class='container'>
-                new container text
-              </div>
-              """
-          expect($('.container')).toHaveText('new container text')
-          expect(document.title).toBe('Title from header')
+        describe 'selector processing', ->
 
-        it 'prepends instead of replacing when the target has a :before pseudo-selector', (done) ->
-          promise = up.replace('.middle:before', '/path')
-          @respond()
-          promise.then ->
-            expect($('.before')).toHaveText('old-before')
-            expect($('.middle')).toHaveText('new-middleold-middle')
-            expect($('.after')).toHaveText('old-after')
-            done()
+          it 'replaces multiple selectors separated with a comma', (done) ->
+            promise = up.replace('.middle, .after', '/path')
+            @respond()
+            promise.then ->
+              expect($('.before')).toHaveText('old-before')
+              expect($('.middle')).toHaveText('new-middle')
+              expect($('.after')).toHaveText('new-after')
+              done()
 
-        it 'appends instead of replacing when the target has a :after pseudo-selector', (done) ->
-          promise = up.replace('.middle:after', '/path')
-          @respond()
-          promise.then ->
-            expect($('.before')).toHaveText('old-before')
-            expect($('.middle')).toHaveText('old-middlenew-middle')
-            expect($('.after')).toHaveText('old-after')
-            done()
+          it 'replaces the body if asked to replace the "html" selector'
 
-        it "lets the developer choose between replacing/prepending/appending for each selector", (done) ->
-          promise = up.replace('.before:before, .middle, .after:after', '/path')
-          @respond()
-          promise.then ->
-            expect($('.before')).toHaveText('new-beforeold-before')
-            expect($('.middle')).toHaveText('new-middle')
-            expect($('.after')).toHaveText('old-afternew-after')
-            done()
+          it 'prepends instead of replacing when the target has a :before pseudo-selector', (done) ->
+            promise = up.replace('.middle:before', '/path')
+            @respond()
+            promise.then ->
+              expect($('.before')).toHaveText('old-before')
+              expect($('.middle')).toHaveText('new-middleold-middle')
+              expect($('.after')).toHaveText('old-after')
+              done()
+
+          it 'appends instead of replacing when the target has a :after pseudo-selector', (done) ->
+            promise = up.replace('.middle:after', '/path')
+            @respond()
+            promise.then ->
+              expect($('.before')).toHaveText('old-before')
+              expect($('.middle')).toHaveText('old-middlenew-middle')
+              expect($('.after')).toHaveText('old-after')
+              done()
+
+          it "lets the developer choose between replacing/prepending/appending for each selector", (done) ->
+            promise = up.replace('.before:before, .middle, .after:after', '/path')
+            @respond()
+            promise.then ->
+              expect($('.before')).toHaveText('new-beforeold-before')
+              expect($('.middle')).toHaveText('new-middle')
+              expect($('.after')).toHaveText('old-afternew-after')
+              done()
 
         it 'executes only those script-tags in the response that get inserted into the DOM', (done) ->
           window.scriptTagExecuted = jasmine.createSpy('scriptTagExecuted')
