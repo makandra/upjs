@@ -355,6 +355,8 @@ describe 'up.flow', ->
               expect($('.up-insertion')).not.toExist()
               done()
 
+        it 'uses a { failTransition } option if the request failed'
+
       else
         
         it 'makes a full page load', ->

@@ -161,10 +161,13 @@ up.flow = (($) ->
 
     options = u.options(options)
     
-    selector = resolveSelector(selectorOrElement, options)
-      
+    successSelector = resolveSelector(selectorOrElement, options)
+    failureSelector = u.option(options.failTarget, 'body')
+    failureSelector = resolveSelector(failureSelector, options)
+
     if !up.browser.canPushState() && options.history != false
-      up.browser.loadPage(url, u.only(options, 'method')) unless options.preload
+      unless options.preload
+        up.browser.loadPage(url, u.only(options, 'method', 'data'))
       return u.unresolvablePromise()
 
     request =
@@ -195,6 +198,8 @@ up.flow = (($) ->
         options.source = url
       options.title ||= u.titleFromXhr(xhr)
       implant(selector, html, options) unless options.preload
+
+    promise
 
     promise.fail(u.error)
       

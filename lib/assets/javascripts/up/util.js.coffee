@@ -1446,6 +1446,28 @@ up.util = (($) ->
 #    else
 #      error('Could not parse argument names of %o', fun)
 
+  requestDataAsArray = (data) ->
+    if u.isMissing(data)
+      []
+    else if u.isArray(data)
+      data
+    else if isObject(options.data)
+      { key: key, value: value } for key, value of options.data
+    else
+      u.error('Unknown options.data type for %o', options.data)
+
+  requestDataAsQueryString = (data)
+    array = normalizeData(data)
+    query = ''
+    if u.isPresent(array)
+      query += '?'
+      u.each array, (field, index) ->
+        query += '&' unless index == 0
+        query += encodeURIComponent(field.name) + '=' + encodeURIComponent(field.value)
+    query
+
+  requestDataAsArray: requestDataAsArray
+  requestDataAsQueryString: requestDataAsQueryString
   offsetParent: offsetParent
   fixedToAbsolute: fixedToAbsolute
   presentAttr: presentAttr
