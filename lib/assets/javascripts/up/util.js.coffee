@@ -29,9 +29,9 @@ up.util = (($) ->
   ###
   ajax = (request) ->
     request = copy(request)
-    if request.selector
+    if request.target
       request.headers ||= {}
-      request.headers['X-Up-Selector'] = request.selector
+      request.headers['X-Up-Target'] = request.target
     # Delegate to jQuery
     $.ajax(request)
 
@@ -1447,21 +1447,21 @@ up.util = (($) ->
 #      error('Could not parse argument names of %o', fun)
 
   requestDataAsArray = (data) ->
-    if u.isMissing(data)
+    if isMissing(data)
       []
-    else if u.isArray(data)
+    else if isArray(data)
       data
-    else if isObject(options.data)
-      { key: key, value: value } for key, value of options.data
+    else if isObject(data)
+      { name: name, value: value } for name, value of data
     else
-      u.error('Unknown options.data type for %o', options.data)
+      error('Unknown options.data type for %o', data)
 
-  requestDataAsQueryString = (data)
-    array = normalizeData(data)
+  requestDataAsQueryString = (data) ->
+    array = requestDataAsArray(data)
     query = ''
-    if u.isPresent(array)
+    if isPresent(array)
       query += '?'
-      u.each array, (field, index) ->
+      each array, (field, index) ->
         query += '&' unless index == 0
         query += encodeURIComponent(field.name) + '=' + encodeURIComponent(field.value)
     query

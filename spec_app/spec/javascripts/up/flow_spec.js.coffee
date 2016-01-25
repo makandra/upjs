@@ -32,6 +32,11 @@ describe 'up.flow', ->
             expect($('.after')).toHaveText('old-after')
             done()
 
+        it 'sends an X-Up-Target HTTP headers along with the request', ->
+          up.replace('.middle', '/path')
+          request = @lastRequest()
+          expect(request.requestHeaders['X-Up-Target']).toEqual('.middle')
+
         describe 'with { data } option', ->
 
           it "uses the given params as a non-GET request's payload", ->
@@ -53,8 +58,8 @@ describe 'up.flow', ->
           it 'replaces the <body> instead of the given selector', ->
             implantSpy = up.flow.knife.mock('implant') # can't have the example replace the Jasmine test runner UI
             up.replace('.middle', '/path')
-            @respond()
-            expect(implantSpy).toHaveBeenCalledWith('body', jasmine.any(String))
+            @respond(status: 500)
+            expect(implantSpy).toHaveBeenCalledWith('body', jasmine.any(String), jasmine.any(Object))
 
           it 'uses a target selector given as { failTarget } option', ->
             up.replace('.middle', '/path', failTarget: '.after')
@@ -64,57 +69,60 @@ describe 'up.flow', ->
 
         describe 'history', ->
 
-          beforeEach ->
-            @oldPathname = window.location.pathname
-
           it 'should set the browser location to the given URL', (done) ->
             promise = up.replace('.middle', '/path')
             @respond()
             promise.then ->
-              expect(window.location.pathname).toBe('/path')
+              expect(location.href).toEndWith('/path')
               done()
 
           it 'does not add a history entry after non-GET requests', ->
             promise = up.replace('.middle', '/path', method: 'post')
-            @respond(failTarget: '.middle')
-            expect(window.location.pathname).toBe(@oldPathname)
+            @respond()
+            expect(location.href).toEndWith(@hrefBeforeExample)
 
           it 'adds a history entry after non-GET requests if the response includes a { X-Up-Method: "get" } header (will happen after a redirect)', ->
             promise = up.replace('.middle', '/path', method: 'post')
-            @respond(failTarget: '.middle', responseHeaders: { 'X-Up-Method': 'get' })
-            expect(window.location.pathname).toBe('/path')
+            @respond(responseHeaders: { 'X-Up-Method': 'get' })
+            expect(location.href).toEndWith('/path')
 
-          describe 'if a URL is given as { history } option', ->
-
-            it 'adds a history entry after a non-GET request', ->
-              promise = up.replace('.middle', '/path', method: 'post', history: '/given-path')
-              @respond(failTarget: '.middle')
-              expect(window.location.pathname).toBe('/given-path')
-
-            it 'does not add a history entry after a failed non-GET request', ->
-              promise = up.replace('.middle', '/path', method: 'post', history: '/given-path')
-              @respond(failTarget: '.middle', status: 500)
-              expect(window.location.pathname).toBe(@oldPathname)
-
-          it 'adds a history entry if a GET-request failed', ->
-            promise = up.replace('.middle', '/path', method: 'post')
-            @respond(failTarget: '.middle', status: 500)
-            expect(window.location.pathname).toBe('/path')
+          it 'does not a history entry after a failed GET-request', ->
+            promise = up.replace('.middle', '/path', method: 'post', failTarget: '.middle')
+            @respond(status: 500)
+            expect(location.href).toEndWith(@hrefBeforeExample)
 
           it 'does not add a history entry with { history: false } option', ->
             promise = up.replace('.middle', '/path', history: false)
             @respond()
-            expect(window.location.pathname).toBe(@oldPathname)
+            expect(location.href).toEndWith(@hrefBeforeExample)
 
           it "detects a redirect's new URL when the server sets an X-Up-Location header", ->
             promise = up.replace('.middle', '/path')
             @respond(responseHeaders: { 'X-Up-Location': '/other-path' })
-            expect(window.location.pathname).toBe('/other-path')
+            expect(location.href).toEndWith('/other-path')
 
-          it 'adds query params given as { data } option to the URL of a GET request', ->
+          it 'adds params from a { data } option to the URL of a GET request', ->
             promise = up.replace('.middle', '/path', data: { 'foo-key': 'foo value', 'bar-key': 'bar value' })
             @respond()
-            expect(window.location.pathname).toBe('/other-path?foo-key=foo+value&bar-key=bar+value')
+            console.log("EXPECTATION COMING UP AGAINST %o", location.pathname)
+            expect(location.href).toEndWith('/path?foo-key=foo%20value&bar-key=bar%20value')
+
+          describe 'if a URL is given as { history } option', ->
+
+            it 'uses that URL as the new location after a GET request', ->
+              promise = up.replace('.middle', '/path', history: '/given-path')
+              @respond(failTarget: '.middle')
+              expect(location.href).toEndWith('/given-path')
+
+            it 'adds a history entry after a non-GET request', ->
+              promise = up.replace('.middle', '/path', method: 'post', history: '/given-path')
+              @respond(failTarget: '.middle')
+              expect(location.href).toEndWith('/given-path')
+
+            it 'does not add a history entry after a failed non-GET request', ->
+              promise = up.replace('.middle', '/path', method: 'post', history: '/given-path', failTarget: '.middle')
+              @respond(failTarget: '.middle', status: 500)
+              expect(location.href).toEndWith(@hrefBeforeExample)
 
         describe 'source', ->
 
@@ -130,7 +138,24 @@ describe 'up.flow', ->
             up.replace('.middle', '/path', method: 'post')
             @respond()
             expect($('.middle')).toHaveText('new-middle')
-            expect($('.middle').attr('up-source')).toBe('/previous-source')
+            expect(up.flow.source('.middle')).toEndWith('/previous-source')
+
+          describe 'if a URL is given as { source } option', ->
+
+            it 'uses that URL as the source for a GET request', ->
+              promise = up.replace('.middle', '/path', source: '/given-path')
+              @respond()
+              expect(up.flow.source('.middle')).toEndWith('/given-path')
+
+            it 'uses that URL as the source after a non-GET request', ->
+              promise = up.replace('.middle', '/path', method: 'post', source: '/given-path')
+              @respond()
+              expect(up.flow.source('.middle')).toEndWith('/given-path')
+
+            it 'still reuses the previous URL after a failed non-GET request', ->
+              promise = up.replace('.middle', '/path', method: 'post', source: '/given-path', failTarget: '.middle')
+              @respond(status: 500)
+              expect(up.flow.source('.middle')).toEndWith(@hrefBeforeExample)
 
         it 'understands non-standard CSS selector extensions such as :has(...)', (done) ->
           $first = affix('.boxx#first')

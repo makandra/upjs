@@ -19,6 +19,13 @@ up.flow = (($) ->
     sourceUrl = u.normalizeUrl(sourceUrl) if u.isPresent(sourceUrl)
     $element.attr("up-source", sourceUrl)
 
+  ###*
+  Returns the URL the given element was retrieved from.
+
+  @method up.flow.source
+  @param {String|Element|jQuery} selectorOrElement
+  @experimental
+  ###
   source = (selectorOrElement) ->
     $element = $(selectorOrElement).closest('[up-source]')
     u.presence($element.attr("up-source")) || up.browser.url()
@@ -103,7 +110,7 @@ up.flow = (($) ->
   \#\#\#\# Optimizing response rendering
 
   The server is free to optimize Up.js requests by only rendering the HTML fragment
-  that is being updated. The request's `X-Up-Selector` header will contain
+  that is being updated. The request's `X-Up-Target` header will contain
   the CSS selector for the updating fragment.
 
   If you are using the `upjs-rails` gem you can also access the selector via
@@ -161,9 +168,9 @@ up.flow = (($) ->
 
     options = u.options(options)
     
-    successSelector = resolveSelector(selectorOrElement, options)
-    failureSelector = u.option(options.failTarget, 'body')
-    failureSelector = resolveSelector(failureSelector, options)
+    target = resolveSelector(selectorOrElement, options)
+    failTarget = u.option(options.failTarget, 'body')
+    failTarget = resolveSelector(failTarget, options)
 
     if !up.browser.canPushState() && options.history != false
       unless options.preload
@@ -174,36 +181,91 @@ up.flow = (($) ->
       url: url
       method: options.method
       data: options.data
-      selector: selector
+      target: target
+      failTarget: failTarget
       cache: options.cache
       preload: options.preload
       headers: options.headers
 
     promise = up.proxy.ajax(request)
-    
+
     promise.done (html, textStatus, xhr) ->
-      # The server can send us the current path using a header value.
-      # This way we know the actual URL if the server has redirected.
-      if currentLocation = u.locationFromXhr(xhr)
-        u.debug('Location from server: %o', currentLocation)
-        newRequest =
-          url: currentLocation
-          method: u.methodFromXhr(xhr)
-          selector: selector
-        up.proxy.alias(request, newRequest)
-        url = currentLocation
-      unless options.history is false
-        options.history = url
-      unless options.source is false
-        options.source = url
-      options.title ||= u.titleFromXhr(xhr)
-      implant(selector, html, options) unless options.preload
+      processResponse(true, target, url, request, xhr, options)
 
-    promise
-
-    promise.fail(u.error)
+    promise.fail (xhr, textStatus, errorThrown) ->
+      processResponse(false, failTarget, url, request, xhr, options)
+    
+#    promise.done (html, textStatus, xhr) ->
+#      # The server can send us the current path using a header value.
+#      # This way we know the actual URL if the server has redirected.
+#      if currentLocation = u.locationFromXhr(xhr)
+#        u.debug('Location from server: %o', currentLocation)
+#        newRequest =
+#          url: currentLocation
+#          method: u.methodFromXhr(xhr)
+#          selector: selector
+#        up.proxy.alias(request, newRequest)
+#        url = currentLocation
+#      unless options.history is false
+#        options.history = url
+#      unless options.source is false
+#        options.source = url
+#      options.title ||= u.titleFromXhr(xhr)
+#      implant(selector, html, options) unless options.preload
+#
+#    promise
+#
+#    promise.fail(u.error)
       
     promise
+
+  ###*
+  @internal
+  ###
+  processResponse = (isSuccess, selector, url, request, xhr, options) ->
+
+    console.log('processResponse with %o / %o', selector, options)
+
+    options.method = u.normalizeMethod(u.option(u.methodFromXhr(xhr), options.method))
+    options.title = u.option(u.titleFromXhr(xhr), options.title)
+    isReloadable = (options.method == 'GET')
+
+    # The server can send us the current path using a header value.
+    # This way we know the actual URL if the server has redirected.
+    if urlFromServer = u.locationFromXhr(xhr)
+      url = urlFromServer
+      if isSuccess
+        newRequest =
+          url: url
+          method: u.methodFromXhr(xhr)
+          target: selector
+        up.proxy.alias(request, newRequest)
+    else if isReloadable
+      url = url + u.requestDataAsQueryString(options.data)
+
+    if isSuccess
+      if isReloadable # e.g. GET returns 200 OK
+        options.history = url unless options.history is false || u.isString(options.history)
+        options.source  = url unless options.source  is false || u.isString(options.source)
+      else # e.g. POST returns 200 OK
+        options.history = false  unless u.isString(options.history)
+        options.source  = 'keep' unless u.isString(options.source)
+    else
+      options.transition = options.failTransition
+      options.failTransition = undefined
+      if isReloadable # e.g. GET returns 500 Internal Server Error
+        options.history = url unless options.history is false
+        options.source  = url unless options.source  is false
+      else # e.g. POST returns 500 Internal Server Error
+        options.source  = 'keep'
+        options.history = false
+
+    if options.preload
+      u.resolvedPromise()
+    else
+      implant(selector, xhr.responseText, options)
+
+
 
   ###*
   Updates a selector on the current page with the
@@ -233,7 +295,7 @@ up.flow = (($) ->
   Note how only `.two` has changed. The update for `.one` was
   discarded, since it didn't match the selector.
 
-  @function up.implant
+  @function up.implant'
   @param {String|Element|jQuery} selectorOrElement
   @param {String} html
   @param {Object} [options]
@@ -246,7 +308,7 @@ up.flow = (($) ->
       historyMethod: 'push',
       requireMatch: true
     )
-    options.source = u.option(options.source, options.history)
+    # options.source = u.option(options.source, options.history)
     response = parseResponse(html, options)
     options.title ||= response.title()
 
@@ -288,6 +350,9 @@ up.flow = (($) ->
         u.error("Could not find selector %o in response %o", selector, html)
 
   elementsInserted = ($new, options) ->
+
+    console.log("INSERTED WITH %o", options.history)
+
     if options.history
       document.title = options.title if options.title
       up.history[options.historyMethod](options.history)
@@ -302,6 +367,11 @@ up.flow = (($) ->
 
   swapElements = ($old, $new, pseudoClass, transition, options) ->
     transition ||= 'none'
+
+    if options.source == 'keep'
+      options = u.merge(options, source: source($old))
+
+    console.log('!!! swapping elements %o / %o / %o', $old, $new, options.source)
 
     # Ensure that all transitions and animations have completed.
     up.motion.finish($old)
@@ -521,6 +591,7 @@ up.flow = (($) ->
   destroy: destroy
   implant: implant
   first: first
+  source: source
   resolveSelector: resolveSelector
 
 )(jQuery)

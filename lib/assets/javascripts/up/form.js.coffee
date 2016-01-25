@@ -153,8 +153,8 @@ up.form = (($) ->
     request = {
       url: url
       method: httpMethod
-      data: $form.serialize()
-      selector: successSelector
+      data: $form.serializeArray()
+      target: successSelector
       cache: useCache
       headers: headers
     }

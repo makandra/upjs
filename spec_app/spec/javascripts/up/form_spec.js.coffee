@@ -7,13 +7,13 @@ describe 'up.form', ->
     describe 'up.observe', ->
 
       changeEvents = if up.browser.canInputEvent()
-# Actually we only need `input`, but we want to notice
-# if another script manually triggers `change` on the element.
+        # Actually we only need `input`, but we want to notice
+        # if another script manually triggers `change` on the element.
         ['input', 'change']
       else
-# Actually we won't ever get `input` from the user in this browser,
-# but we want to notice if another script manually triggers `input`
-# on the element.
+        # Actually we won't ever get `input` from the user in this browser,
+        # but we want to notice if another script manually triggers `input`
+        # on the element.
         ['input', 'change', 'keypress', 'paste', 'cut', 'click', 'propertychange']
 
       u.each changeEvents, (eventName) ->
@@ -221,7 +221,7 @@ describe 'up.form', ->
 
           request = @lastRequest()
           expect(request.requestHeaders['X-Up-Validate']).toEqual('user')
-          expect(request.requestHeaders['X-Up-Selector']).toEqual(".field-group:has([name='user'])")
+          expect(request.requestHeaders['X-Up-Target']).toEqual(".field-group:has([name='user'])")
 
           @respondWith """
             <div class="field-group has-error">

@@ -18,7 +18,7 @@ up.rails = (($) ->
       u.setMissingAttrs($element, 'up-method': $element.attr('data-method'))
       $element.removeAttr('data-method')
 
-  csrfField: ->
+  csrfField = ->
     if isRails()
       name: $.rails.csrfParam()
       value: $.rails.csrfToken()
