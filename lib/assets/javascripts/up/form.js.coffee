@@ -468,7 +468,7 @@ up.form = (($) ->
 
   When the form's action performs a redirect, the server should echo
   the new request's URL as a response header `X-Up-Location`
-  and the request's HTTP method as `X-Up-Method`.
+  and the request's HTTP method as `X-Up-Method: GET`.
 
   If you are using Up.js via the `upjs-rails` gem, these headers
   are set automatically for every request.
