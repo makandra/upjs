@@ -97,7 +97,6 @@ describe 'up.form', ->
           request = @lastRequest()
           expect(request.url).toMatch /\/path\/to$/
           expect(request.method).toBe 'PUT'
-          expect(request.method).toBe 'PUT'
           expect(request.data()).toEqual
             field1: ['value1']
             field2: ['value2']
