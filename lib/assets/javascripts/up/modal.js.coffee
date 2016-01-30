@@ -136,10 +136,10 @@ up.modal = (($) ->
   @experimental
   ###
   coveredUrl = ->
-    $element().attr('up-covered-url')
+    $('.up-modal').attr('up-covered-url')
 
   reset = ->
-    close()
+    close(animation: false)
     currentUrl = undefined
     config.reset()
 
@@ -150,22 +150,8 @@ up.modal = (($) ->
     else
       template
 
-  ###*
-  Returns the element containing the modal.
-
-  @internal
-  @method up.modal.$element
-  ###
-  $element = ->
-    up.first('.up-modal')
-
-  rememberHistory = ->
-    $modal = $element()
-    $modal.attr('up-covered-url', up.browser.url())
-    $modal.attr('up-covered-title', document.title)
-
   discardHistory = ->
-    $modal  =$element()
+    $modal = $('.up-modal')
     $modal.removeAttr('up-covered-url')
     $modal.removeAttr('up-covered-title')
 
@@ -183,7 +169,6 @@ up.modal = (($) ->
     $placeholder = u.$createElementFromSelector(target)
     $placeholder.appendTo($content)
     $modal.appendTo(document.body)
-    rememberHistory()
     $modal
 
   unshifters = []
@@ -214,6 +199,15 @@ up.modal = (($) ->
   # Reverts the effects of `shiftElements`.
   unshiftElements = ->
     unshifter() while unshifter = unshifters.pop()
+
+  ###*
+  Returns whether the modal is currently open.
+
+  @function up.modal.isOpen
+  @stable
+  ###
+  isOpen = ->
+    $('.up-modal').length > 0
 
   ###*
   Opens the given link's destination in a modal overlay:
@@ -310,10 +304,10 @@ up.modal = (($) ->
 
     if up.bus.nobodyPrevents('up:modal:open', url: url)
       wasOpen = isOpen()
-      close(animation: 'none') if wasOpen
+      close(animation: false) if wasOpen
       options.beforeSwap = -> createFrame(target, options)
-      return up.replace(target, url, u.merge(animation: 'none'))
-        .then(-> up.animate($element(), options.animation, animateOptions) unless wasOpen)
+      return up.replace(target, url, u.merge(options, animation: false))
+        .then(-> up.animate($('.up-modal'), options.animation, animateOptions) unless wasOpen)
         .then(-> up.emit('up:modal:opened'))
     else
       # Although someone prevented opening the modal, keep a uniform API for
@@ -352,7 +346,7 @@ up.modal = (($) ->
   @stable
   ###
   close = (options) ->
-    $modal = $element()
+    $modal = $('.up-modal')
     if $modal.length
       if up.bus.nobodyPrevents('up:modal:close', $element: $modal)
         options = u.options(options,
@@ -391,7 +385,7 @@ up.modal = (($) ->
   ###
 
   autoclose = ->
-    unless $element().is('[up-sticky]')
+    unless $('.up-modal').is('[up-sticky]')
       discardHistory()
       close()
 
@@ -484,8 +478,8 @@ up.modal = (($) ->
   coveredUrl: coveredUrl
   config: config
   defaults: -> u.error('up.modal.defaults(...) no longer exists. Set values on he up.modal.config property instead.')
-  $element: $element
   contains: contains
   source: -> up.error('up.popup.source no longer exists. Please use up.popup.url instead.')
+  isOpen: isOpen
 
 )(jQuery)

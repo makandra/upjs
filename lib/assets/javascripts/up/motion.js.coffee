@@ -156,7 +156,7 @@ up.motion = (($) ->
     options = animateOptions(options)
     if animation == 'none' || animation == false
       none()
-    if u.isFunction(animation)
+    else if u.isFunction(animation)
       assertIsDeferred(animation($element, options), animation)
     else if u.isString(animation)
       animate($element, findAnimation(animation), options)
@@ -168,7 +168,7 @@ up.motion = (($) ->
         $element.css(animation)
         u.resolvedDeferred()
     else
-      u.error("Unknown animation type %o", animation)
+      u.error("Unknown animation type for %o", animation)
 
   ###*
   Extracts animation-related options from the given options hash.
@@ -356,9 +356,11 @@ up.motion = (($) ->
       finish($old)
       finish($new)
 
-      if transitionOrName == 'none' || transitionOrName == false || animation = animations[transitionOrName]
-        return skipMorph($old, $new, parsedOptions).then ->
-          animate($new, animation || 'none', options)
+      if transitionOrName == 'none' || transitionOrName == false
+        return skipMorph($old, $new, parsedOptions)
+      else if animation = animations[transitionOrName]
+        skipMorph($old, $new, parsedOptions)
+        return animate($new, animation, parsedOptions)
       else if transition = u.presence(transitionOrName, u.isFunction) || transitions[transitionOrName]
         return withGhosts $old, $new, parsedOptions, ($oldGhost, $newGhost) ->
           transitionPromise = transition($oldGhost, $newGhost, parsedOptions)

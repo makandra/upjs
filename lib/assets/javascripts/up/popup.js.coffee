@@ -91,7 +91,7 @@ up.popup = (($) ->
     history: false
 
   reset = ->
-    close()
+    close(animation: false)
     config.reset()
 
   setPosition = ($link, $popup, position) ->

@@ -1194,7 +1194,20 @@ up.util = (($) ->
     joined.resolve = ->
       each deferreds, (deferred) -> deferred.resolve?()
     joined
-    
+
+#  resolvableSequence = (first, callbacks...) ->
+#    sequence = $.Deferred().promise()
+#    values = [first]
+#    current = first
+#    for callback in callbacks
+#      current = current.then ->
+#        value = callback()
+#        values.push(value) if u.isPromise(value)
+#        value
+#    sequence.resolve = ->
+#      each values, (deferred) -> deferred.resolve?()
+#    sequence
+
   ###*
   On the given element, set attributes that are still missing.
 

@@ -224,8 +224,6 @@ up.flow = (($) ->
   ###
   processResponse = (isSuccess, selector, url, request, xhr, options) ->
 
-    console.log('processResponse with %o / %o', selector, options)
-
     options.method = u.normalizeMethod(u.option(u.methodFromXhr(xhr), options.method))
     options.title = u.option(u.titleFromXhr(xhr), options.title)
     isReloadable = (options.method == 'GET')
@@ -317,7 +315,7 @@ up.flow = (($) ->
 
     up.layout.saveScroll() unless options.saveScroll == false
 
-    options.beforeSwap?($old. $new)
+    options.beforeSwap?($old, $new)
     deferreds = []
 
     for step in parseImplantSteps(selector, options)
@@ -511,7 +509,7 @@ up.flow = (($) ->
   destroy = (selectorOrElement, options) ->
     $element = $(selectorOrElement)
     if up.bus.nobodyPrevents('up:fragment:destroy', $element: $element)
-      options = u.options(options, animation: 'none')
+      options = u.options(options, animation: false)
       animateOptions = up.motion.animateOptions(options)
       $element.addClass('up-destroying')
       # If e.g. a modal or popup asks us to restore a URL, do this
