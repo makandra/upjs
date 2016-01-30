@@ -300,6 +300,9 @@ up.flow = (($) ->
   @param {String} html
   @param {Object} [options]
     See options for [`up.replace`](/up.replace).
+  @return {Promise}
+    A promise that will be resolved then the selector was updated
+    and all animation has finished.
   @experimental
   ###
   implant = (selectorOrElement, html, options) ->
@@ -314,11 +317,18 @@ up.flow = (($) ->
 
     up.layout.saveScroll() unless options.saveScroll == false
 
+    options.beforeSwap?($old. $new)
+    deferreds = []
+
     for step in parseImplantSteps(selector, options)
       $old = findOldFragment(step.selector, options)
       $new = response.find(step.selector)?.first()
       if $old && $new
-        swapElements($old, $new, step.pseudoClass, step.transition, options)
+        deferred = swapElements($old, $new, step.pseudoClass, step.transition, options)
+        deferreds.push(deferred)
+
+    options.afterSwap?($old, $new)
+    return up.motion.when(deferreds...)
 
   findOldFragment = (selector, options) ->
     # Prefer to replace fragments in an open popup or modal
@@ -350,9 +360,6 @@ up.flow = (($) ->
         u.error("Could not find selector %o in response %o", selector, html)
 
   elementsInserted = ($new, options) ->
-
-    console.log("INSERTED WITH %o", options.history)
-
     if options.history
       document.title = options.title if options.title
       up.history[options.historyMethod](options.history)
@@ -370,8 +377,6 @@ up.flow = (($) ->
 
     if options.source == 'keep'
       options = u.merge(options, source: source($old))
-
-    console.log('!!! swapping elements %o / %o / %o', $old, $new, options.source)
 
     # Ensure that all transitions and animations have completed.
     up.motion.finish($old)
@@ -391,19 +396,22 @@ up.flow = (($) ->
       u.copyAttributes($new, $old)
       elementsInserted($wrapper.children(), options)
 
+      deferred = $.Deferred()
+
       # Reveal element that was being prepended/appended.
-      up.layout.revealOrRestoreScroll($wrapper, options)
-        .then ->
-          # Since we're adding content instead of replacing, we'll only
-          # animate $new instead of morphing between $old and $new
-          return up.animate($wrapper, transition, options)
-        .then ->
+      up.layout.revealOrRestoreScroll($wrapper, options).then ->
+        # Since we're adding content instead of replacing, we'll only
+        # animate $new instead of morphing between $old and $new
+        up.animate($wrapper, transition, options).then ->
           u.unwrapElement($wrapper)
-          return
+          deferred.resolve()
+
+      return deferred.promise()
+
     else
       # Wrap the replacement as a destroy animation, so $old will
       # get marked as .up-destroying right away.
-      destroy $old, animation: ->
+      return destroy $old, animation: ->
         # Don't insert the new element after the old element.
         # For some reason this will make the browser scroll to the
         # bottom of the new element.

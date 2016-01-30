@@ -136,8 +136,7 @@ up.modal = (($) ->
   @experimental
   ###
   coveredUrl = ->
-    $modal = $('.up-modal')
-    $modal.attr('up-covered-url')
+    $element().attr('up-covered-url')
 
   reset = ->
     close()
@@ -151,17 +150,27 @@ up.modal = (($) ->
     else
       template
 
+  ###*
+  Returns the element containing the modal.
+
+  @internal
+  @method up.modal.$element
+  ###
+  $element = ->
+    up.first('.up-modal')
+
   rememberHistory = ->
-    $modal = $('.up-modal')
+    $modal = $element()
     $modal.attr('up-covered-url', up.browser.url())
     $modal.attr('up-covered-title', document.title)
 
   discardHistory = ->
-    $modal = $('.up-modal')
+    $modal  =$element()
     $modal.removeAttr('up-covered-url')
     $modal.removeAttr('up-covered-title')
 
-  createHiddenModal = (options) ->
+  createFrame = (target, options) ->
+    shiftElements()
     $modal = $(templateHtml())
     $modal.attr('up-sticky', '') if options.sticky
     $modal.attr('up-covered-url', up.browser.url())
@@ -171,11 +180,10 @@ up.modal = (($) ->
     $dialog.css('max-width', options.maxWidth) if u.isPresent(options.maxWidth)
     $dialog.css('height', options.height) if u.isPresent(options.height)
     $content = $modal.find('.up-modal-content')
-    $placeholder = u.$createElementFromSelector(options.selector)
+    $placeholder = u.$createElementFromSelector(target)
     $placeholder.appendTo($content)
     $modal.appendTo(document.body)
     rememberHistory()
-    $modal.hide()
     $modal
 
   unshiftElements = []
@@ -202,14 +210,6 @@ up.modal = (($) ->
       elementRightShift = scrollbarWidth + elementRight
       unshiftElement = u.temporaryCss($element, 'right': elementRightShift)
       unshiftElements.push(unshiftElement)
-
-  updated = (animation, animateOptions) ->
-    $modal = $('.up-modal')
-    if $modal.is(':hidden')
-      shiftElements()
-      $modal.show()
-      deferred = up.animate($modal, animation, animateOptions)
-      deferred.then -> up.emit('up:modal:opened')
 
   ###*
   Opens the given link's destination in a modal overlay:
@@ -275,7 +275,8 @@ up.modal = (($) ->
   @param {Object} options
     See options for [`up.modal.follow`](/up.modal.follow).
   @return {Promise}
-    A promise that will be resolved when the popup has been loaded and rendered.
+    A promise that will be resolved when the popup has been loaded and the opening
+    animation has completed..
   @stable
   ###
   visit = (url, options) ->
@@ -291,34 +292,33 @@ up.modal = (($) ->
     options = u.options(options)
     $link = u.option(options.$link, u.nullJQuery())
     url = u.option(options.url, $link.attr('up-href'), $link.attr('href'))
-    selector = u.option(options.target, $link.attr('up-modal'), 'body')
-    width = u.option(options.width, $link.attr('up-width'), config.width)
-    maxWidth = u.option(options.maxWidth, $link.attr('up-max-width'), config.maxWidth)
-    height = u.option(options.height, $link.attr('up-height'), config.height)
-    animation = u.option(options.animation, $link.attr('up-animation'), config.openAnimation)
-    sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'))
+    target = u.option(options.target, $link.attr('up-modal'), 'body')
+    options.width = u.option(options.width, $link.attr('up-width'), config.width)
+    options.maxWidth = u.option(options.maxWidth, $link.attr('up-max-width'), config.maxWidth)
+    options.height = u.option(options.height, $link.attr('up-height'), config.height)
+    options.animation = u.option(options.animation, $link.attr('up-animation'), config.openAnimation)
+    options.sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'))
     # Although we usually fall back to full page loads if a browser doesn't support pushState,
     # in the case of modals we assume that the developer would rather see a dialog
     # without an URL update.
-    history = if up.browser.canPushState() then u.option(options.history, u.castedAttr($link, 'up-history'), config.history) else false
+    options.history = if up.browser.canPushState() then u.option(options.history, u.castedAttr($link, 'up-history'), config.history) else false
     animateOptions = up.motion.animateOptions(options, $link)
 
-    close()
-
     if up.bus.nobodyPrevents('up:modal:open', url: url)
-      createHiddenModal
-        selector: selector
-        width: width
-        maxWidth: maxWidth
-        height: height
-        sticky: sticky
-      promise = up.replace(selector, url, history: history, requireMatch: false)
-      promise.then -> updated(animation, animateOptions)
-      promise
+      wasOpen = isOpen()
+      close(animation: 'none') if wasOpen
+      options.beforeSwap = -> createFrame(target, options)
+      opened = $.Deferred()
+      throw "THIS WILL ANIMATE THE WRONG ELEMENT"
+      up.replace(target, url, options).then ->
+        up.animate($element(), options.animation, animateOptions).then ->
+          up.emit('up:modal:opened')
+          opened.resolve()
+      opened.promise()
     else
-      # Although someone prevented the destruction, keep a uniform API for
+      # Although someone prevented opening the modal, keep a uniform API for
       # callers by returning a Deferred that will never be resolved.
-      u.unresolvableDeferred()
+      u.unresolvablePromise()
 
   ###*
   This event is [emitted](/up.emit) when a modal dialog is starting to open.
@@ -352,7 +352,7 @@ up.modal = (($) ->
   @stable
   ###
   close = (options) ->
-    $modal = $('.up-modal')
+    $modal = $element()
     if $modal.length
       if up.bus.nobodyPrevents('up:modal:close', $element: $modal)
         options = u.options(options,
@@ -393,7 +393,7 @@ up.modal = (($) ->
   ###
 
   autoclose = ->
-    unless $('.up-modal').is('[up-sticky]')
+    unless $element().is('[up-sticky]')
       discardHistory()
       close()
 
@@ -486,6 +486,7 @@ up.modal = (($) ->
   coveredUrl: coveredUrl
   config: config
   defaults: -> u.error('up.modal.defaults(...) no longer exists. Set values on he up.modal.config property instead.')
+  $element: $element
   contains: contains
   source: -> up.error('up.popup.source no longer exists. Please use up.popup.url instead.')
 
