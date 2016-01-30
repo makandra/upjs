@@ -147,7 +147,7 @@ up.form = (($) ->
 
     promise = up.replace(target, url, options)
     promise.always -> $form.removeClass('up-active')
-    promise
+    return promise
 
   ###*
   Observes a field or form and runs a callback when a value changes.

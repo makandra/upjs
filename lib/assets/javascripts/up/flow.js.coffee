@@ -396,17 +396,14 @@ up.flow = (($) ->
       u.copyAttributes($new, $old)
       elementsInserted($wrapper.children(), options)
 
-      deferred = $.Deferred()
-
       # Reveal element that was being prepended/appended.
-      up.layout.revealOrRestoreScroll($wrapper, options).then ->
-        # Since we're adding content instead of replacing, we'll only
-        # animate $new instead of morphing between $old and $new
-        up.animate($wrapper, transition, options).then ->
+      return up.layout.revealOrRestoreScroll($wrapper, options)
+        .then ->
+          # Since we're adding content instead of replacing, we'll only
+          # animate $new instead of morphing between $old and $new
+          up.animate($wrapper, transition, options)
+        .then ->
           u.unwrapElement($wrapper)
-          deferred.resolve()
-
-      return deferred.promise()
 
     else
       # Wrap the replacement as a destroy animation, so $old will

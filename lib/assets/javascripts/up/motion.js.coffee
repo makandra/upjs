@@ -357,11 +357,10 @@ up.motion = (($) ->
       finish($new)
 
       if transitionOrName == 'none' || transitionOrName == false || animation = animations[transitionOrName]
-        deferred = skipMorph($old, $new, parsedOptions)
-        deferred.then -> animate($new, animation || 'none', options)
-        deferred
+        return skipMorph($old, $new, parsedOptions).then ->
+          animate($new, animation || 'none', options)
       else if transition = u.presence(transitionOrName, u.isFunction) || transitions[transitionOrName]
-        withGhosts $old, $new, parsedOptions, ($oldGhost, $newGhost) ->
+        return withGhosts $old, $new, parsedOptions, ($oldGhost, $newGhost) ->
           transitionPromise = transition($oldGhost, $newGhost, parsedOptions)
           assertIsDeferred(transitionPromise, transitionOrName)
       else if u.isString(transitionOrName) && transitionOrName.indexOf('/') >= 0
@@ -371,11 +370,11 @@ up.motion = (($) ->
             animate($old, parts[0], options),
             animate($new, parts[1], options)
           )
-        morph($old, $new, transition, parsedOptions)
+        return morph($old, $new, transition, parsedOptions)
       else
         u.error("Unknown transition %o", transitionOrName)
     else
-      skipMorph($old, $new, parsedOptions)
+      return skipMorph($old, $new, parsedOptions)
 
   ###*
   This causes the side effects of a successful transition, but instantly.

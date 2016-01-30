@@ -186,7 +186,7 @@ up.modal = (($) ->
     rememberHistory()
     $modal
 
-  unshiftElements = []
+  unshifters = []
 
   # Gives `<body>` a right padding in the width of a scrollbar.
   # Also gives elements anchored to the right side of the screen
@@ -203,13 +203,17 @@ up.modal = (($) ->
       'padding-right': "#{bodyRightShift}px",
       'overflow-y': 'hidden'
     )
-    unshiftElements.push(unshiftBody)
+    unshifters.push(unshiftBody)
     up.layout.anchoredRight().each ->
       $element = $(this)
       elementRight = parseInt($element.css('right'))
       elementRightShift = scrollbarWidth + elementRight
-      unshiftElement = u.temporaryCss($element, 'right': elementRightShift)
-      unshiftElements.push(unshiftElement)
+      unshifter = u.temporaryCss($element, 'right': elementRightShift)
+      unshifters.push(unshifter)
+
+  # Reverts the effects of `shiftElements`.
+  unshiftElements = ->
+    unshifter() while unshifter = unshifters.pop()
 
   ###*
   Opens the given link's destination in a modal overlay:
@@ -308,17 +312,13 @@ up.modal = (($) ->
       wasOpen = isOpen()
       close(animation: 'none') if wasOpen
       options.beforeSwap = -> createFrame(target, options)
-      opened = $.Deferred()
-      throw "THIS WILL ANIMATE THE WRONG ELEMENT"
-      up.replace(target, url, options).then ->
-        up.animate($element(), options.animation, animateOptions).then ->
-          up.emit('up:modal:opened')
-          opened.resolve()
-      opened.promise()
+      return up.replace(target, url, u.merge(animation: 'none'))
+        .then(-> up.animate($element(), options.animation, animateOptions) unless wasOpen)
+        .then(-> up.emit('up:modal:opened'))
     else
       # Although someone prevented opening the modal, keep a uniform API for
       # callers by returning a Deferred that will never be resolved.
-      u.unresolvablePromise()
+      return u.unresolvablePromise()
 
   ###*
   This event is [emitted](/up.emit) when a modal dialog is starting to open.
@@ -361,18 +361,16 @@ up.modal = (($) ->
           title: $modal.attr('up-covered-title')
         )
         currentUrl = undefined
-        deferred = up.destroy($modal, options)
-        deferred.then ->
-          unshifter() while unshifter = unshiftElements.pop()
+        return up.destroy($modal, options).then ->
+          unshiftElements()
           up.emit('up:modal:closed')
-        deferred
       else
         # Although someone prevented the destruction,
         # keep a uniform API for callers by returning
         # a Deferred that will never be resolved.
-        u.unresolvableDeferred()
+        return u.unresolvableDeferred()
     else
-      u.resolvedDeferred()
+      return u.resolvedDeferred()
 
   ###*
   This event is [emitted](/up.emit) when a modal dialog

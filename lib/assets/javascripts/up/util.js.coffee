@@ -1099,6 +1099,21 @@ up.util = (($) ->
     filtered
 
   ###*
+  Returns a copy of the given object that contains all except
+  the given properties.
+
+  @function up.util.except
+  @param {Object} object
+  @param {Array} keys...
+  @stable
+  ###
+  except = (object, properties...) ->
+    filtered = copy(object)
+    for property in properties
+      delete filtered[property]
+    filtered
+
+  ###*
   @function up.util.isUnmodifiedKeyEvent
   @internal
   ###
@@ -1536,6 +1551,7 @@ up.util = (($) ->
   methodFromXhr: methodFromXhr
   clientSize: clientSize
   only: only
+  except: except
   trim: trim
   unresolvableDeferred: unresolvableDeferred
   unresolvablePromise: unresolvablePromise
