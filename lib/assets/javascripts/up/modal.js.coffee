@@ -166,6 +166,8 @@ up.modal = (($) ->
     $dialog.css('max-width', options.maxWidth) if u.isPresent(options.maxWidth)
     $dialog.css('height', options.height) if u.isPresent(options.height)
     $content = $modal.find('.up-modal-content')
+    # Create an empty element that will match the
+    # selector that is being replaced.
     $placeholder = u.$createElementFromSelector(target)
     $placeholder.appendTo($content)
     $modal.appendTo(document.body)
@@ -201,7 +203,7 @@ up.modal = (($) ->
     unshifter() while unshifter = unshifters.pop()
 
   ###*
-  Returns whether the modal is currently open.
+  Returns whether a modal is currently open.
 
   @function up.modal.isOpen
   @stable
@@ -244,7 +246,8 @@ up.modal = (($) ->
   @param {String} [options.easing]
     The timing function that controls the animation's acceleration. [`up.animate`](/up.animate).
   @return {Promise}
-    A promise that will be resolved when the popup has been loaded and rendered.
+    A promise that will be resolved when the modal has been loaded and
+    the opening animation has completed.
   @stable
   ###
   follow = (linkOrSelector, options) ->
@@ -273,7 +276,7 @@ up.modal = (($) ->
   @param {Object} options
     See options for [`up.modal.follow`](/up.modal.follow).
   @return {Promise}
-    A promise that will be resolved when the popup has been loaded and the opening
+    A promise that will be resolved when the modal has been loaded and the opening
     animation has completed..
   @stable
   ###
@@ -305,7 +308,7 @@ up.modal = (($) ->
     if up.bus.nobodyPrevents('up:modal:open', url: url)
       wasOpen = isOpen()
       close(animation: false) if wasOpen
-      options.beforeSwap = -> createFrame(target, options)
+      options.beforeSwap = -> createFrame($link, target, options)
       return up.replace(target, url, u.merge(options, animation: false))
         .then(-> up.animate($('.up-modal'), options.animation, animateOptions) unless wasOpen)
         .then(-> up.emit('up:modal:opened'))
@@ -479,7 +482,7 @@ up.modal = (($) ->
   config: config
   defaults: -> u.error('up.modal.defaults(...) no longer exists. Set values on he up.modal.config property instead.')
   contains: contains
-  source: -> up.error('up.popup.source no longer exists. Please use up.popup.url instead.')
+  source: -> up.error('up.modal.source no longer exists. Please use up.popup.url instead.')
   isOpen: isOpen
 
 )(jQuery)
