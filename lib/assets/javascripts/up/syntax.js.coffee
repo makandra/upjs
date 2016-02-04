@@ -214,6 +214,7 @@ up.syntax = (($) ->
       $jqueryElement.data(DESTROYER_KEY, destroyer)
 
   compile = ($fragment) ->
+    $kept = $(options.kept)
     up.log.group "Compiling fragment %o", $fragment.get(0), ->
       for compiler in compilers
         $matches = u.findWithSelf($fragment, compiler.selector)
@@ -306,6 +307,7 @@ up.syntax = (($) ->
   @function up.hello
   @param {String|Element|jQuery} selectorOrElement
   @param {String|Element|jQuery} [options.origin]
+  @param {String|Element|jQuery} [options.kept]
   @return {jQuery}
     The compiled element
   @stable

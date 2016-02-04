@@ -300,6 +300,7 @@ up.flow = (($) ->
       selector = resolveSelector(selectorOrElement, options.origin)
       response = parseResponse(html, options)
       options.title ||= response.title()
+      options.keep = u.option(options.keep, { '[up-keep]': '&' })
 
       up.layout.saveScroll() unless options.saveScroll == false
 
@@ -357,7 +358,7 @@ up.flow = (($) ->
     autofocus($new)
     # The fragment should be compiled before animating,
     # so transitions see .up-current classes
-    up.hello($new, origin: options.origin)
+    up.hello($new, u.only(options, 'origin', 'kept'))
 
   swapElements = ($old, $new, pseudoClass, transition, options) ->
     transition ||= 'none'
@@ -394,6 +395,7 @@ up.flow = (($) ->
       promise
 
     else
+      options.kept = keepElements($old, $new, options)
       replacement = ->
         # Don't insert the new element after the old element.
         # For some reason this will make the browser scroll to the
@@ -408,6 +410,21 @@ up.flow = (($) ->
       # Wrap the replacement as a destroy animation, so $old will
       # get marked as .up-destroying right away.
       destroy $old, animation: replacement
+
+  keepElements = ($old, $new, options) ->
+    kept = []
+    if options.keep
+      for keepable in $old.find('[up-keep]')
+        $keepable = $(keepable)
+        sisterSelector = $keepable.attr('up-keep') || '&'
+        sisterSelector = resolveSelector(sisterSelector, u.only(options.origin))
+        $sister = $new.find($sister).first()
+        if $sister.length && up.nobodyPrevents('up:fragment:keep', $element: $keepable, $newElement: $sister)
+          $sister.replaceWith($keepable)
+          $keepable.addClass('up-kept')
+          $keepable.attr('up-data', $sister.attr('up-data'))
+          kept.push($keepable)
+    kept
 
   parseImplantSteps = (selector, options) ->
     transitionString = options.transition || options.animation || 'none'
@@ -600,3 +617,4 @@ up.extract = up.flow.extract
 up.reload = up.flow.reload
 up.destroy = up.flow.destroy
 up.first = up.flow.first
+
