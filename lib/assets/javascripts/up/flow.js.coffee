@@ -315,8 +315,6 @@ up.flow = (($) ->
 
     up.layout.saveScroll() unless options.saveScroll == false
 
-    console.log("Calling beforeSwap: %o", options.beforeSwap)
-
     options.beforeSwap?($old, $new)
     deferreds = []
 

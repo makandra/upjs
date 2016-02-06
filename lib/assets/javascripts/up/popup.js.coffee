@@ -155,7 +155,6 @@ up.popup = (($) ->
     # selector that is being replaced.
     $placeholder = u.$createElementFromSelector(target)
     $placeholder.appendTo($popup)
-    console.log("creating element from selector %o => %o", target, $placeholder)
     $popup.appendTo(document.body)
     $popup
 
