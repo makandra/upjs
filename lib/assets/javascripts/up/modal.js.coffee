@@ -277,7 +277,7 @@ up.modal = (($) ->
     See options for [`up.modal.follow`](/up.modal.follow).
   @return {Promise}
     A promise that will be resolved when the modal has been loaded and the opening
-    animation has completed..
+    animation has completed.
   @stable
   ###
   visit = (url, options) ->
@@ -308,14 +308,18 @@ up.modal = (($) ->
     if up.bus.nobodyPrevents('up:modal:open', url: url)
       wasOpen = isOpen()
       close(animation: false) if wasOpen
-      options.beforeSwap = -> createFrame($link, target, options)
-      return up.replace(target, url, u.merge(options, animation: false))
-        .then(-> up.animate($('.up-modal'), options.animation, animateOptions) unless wasOpen)
-        .then(-> up.emit('up:modal:opened'))
+      options.beforeSwap = -> createFrame(target, options)
+      promise =  up.replace(target, url, u.merge(options, animation: false))
+      unless wasOpen
+        promise = promise.then ->
+          up.animate($('.up-modal'), options.animation, animateOptions)
+      promise = promise.then ->
+        up.emit('up:modal:opened')
+      promise
     else
       # Although someone prevented opening the modal, keep a uniform API for
       # callers by returning a Deferred that will never be resolved.
-      return u.unresolvablePromise()
+      u.unresolvablePromise()
 
   ###*
   This event is [emitted](/up.emit) when a modal dialog is starting to open.
@@ -358,16 +362,18 @@ up.modal = (($) ->
           title: $modal.attr('up-covered-title')
         )
         currentUrl = undefined
-        return up.destroy($modal, options).then ->
+        promise = up.destroy($modal, options)
+        promise = promise.then ->
           unshiftElements()
           up.emit('up:modal:closed')
+        promise
       else
         # Although someone prevented the destruction,
         # keep a uniform API for callers by returning
         # a Deferred that will never be resolved.
-        return u.unresolvableDeferred()
+        u.unresolvableDeferred()
     else
-      return u.resolvedDeferred()
+      u.resolvedDeferred()
 
   ###*
   This event is [emitted](/up.emit) when a modal dialog

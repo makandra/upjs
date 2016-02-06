@@ -146,7 +146,7 @@ up.popup = (($) ->
     $popup.removeAttr('up-covered-url')
     $popup.removeAttr('up-covered-title')
     
-  createFrame = ($link, target, options) ->
+  createFrame = (target, options) ->
     $popup = u.$createElementFromSelector('.up-popup')
     $popup.attr('up-sticky', '') if options.sticky
     $popup.attr('up-covered-url', up.browser.url())
@@ -155,6 +155,7 @@ up.popup = (($) ->
     # selector that is being replaced.
     $placeholder = u.$createElementFromSelector(target)
     $placeholder.appendTo($popup)
+    console.log("creating element from selector %o => %o", target, $placeholder)
     $popup.appendTo(document.body)
     $popup
 
@@ -204,22 +205,26 @@ up.popup = (($) ->
     url = u.option(options.url, $link.attr('href'))
     target = u.option(options.target, $link.attr('up-popup'), 'body')
 
-
     options.position = u.option(options.position, $link.attr('up-position'), config.position)
     options.animation = u.option(options.animation, $link.attr('up-animation'), config.openAnimation)
 
-    sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'))
-    history = if up.browser.canPushState() then u.option(options.history, u.castedAttr($link, 'up-history'), config.history) else false
+    options.sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'))
+    options.history = if up.browser.canPushState() then u.option(options.history, u.castedAttr($link, 'up-history'), config.history) else false
     animateOptions = up.motion.animateOptions(options, $link)
 
     if up.bus.nobodyPrevents('up:popup:open', url: url)
       wasOpen = isOpen()
       close(animation: false) if wasOpen
-      options.beforeSwap = createFrame($link, target, selector)
-      return up.replace(selector, url, u.merge(options, animation: false))
-        .then(-> setPosition($link, options.position))
-        .then(-> up.animate($('.up-popup'), options.animation, animateOptions) unless wasOpen)
-        .then(-> up.emit('up:popup:opened'))
+      options.beforeSwap = -> createFrame(target, options)
+      promise = up.replace(target, url, u.merge(options, animation: false))
+      promise = promise.then ->
+        setPosition($link, options.position)
+      unless wasOpen
+        promise = promise.then ->
+          up.animate($('.up-popup'), options.animation, animateOptions)
+      promise = promise.then ->
+        up.emit('up:popup:opened')
+      promise
     else
       # Although someone prevented the destruction, keep a uniform API for
       # callers by returning a Deferred that will never be resolved.
