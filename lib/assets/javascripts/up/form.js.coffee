@@ -379,6 +379,50 @@ up.form = (($) ->
     promise = up.submit($form, options)
     promise
 
+  toggleValues = ($field) ->
+    values = undefined
+    if $field.is('input[type=checkbox]')
+      if $field.is(':checked')
+        values = [':checked', ':present', $field.val()]
+      else
+        values = [':unchecked', ':blank']
+    else if $field.is('input[type=radio]')
+      checkedButton = $field.closest('form').find('input[type="radio"][name="' + $field.attr('name') + '"]:checked')
+      if checkedButton.length
+        values = [':checked', ':present', checkedButton.val()]
+      else
+        values = [':unchecked', ':blank']
+    else
+      value = $field.val()
+      if u.isPresent(value)
+        values = [':present', value]
+      else
+        values = [':blank']
+    values
+
+  ###*
+  TODO: Document me
+
+  @function up.form.toggle
+  @experimental
+  ###
+  toggle = (fieldOrSelector, options) ->
+    $field = $(fieldOrSelector)
+    options = u.options(options)
+    targets = u.option(options.target, $field.attr('up-toggle'))
+    fieldValues = toggleValues($field)
+    $(targets).each ->
+      $target = $(this)
+      if showValues = $target.attr('up-show-for')
+        showValues = showValues.split(' ')
+        show = u.intersect(fieldValues, showValues).length > 0
+      else if hideValues = $target.attr('up-hide-for')
+        hideValues = hideValues.split(' ')
+        show = u.intersect(fieldValues, hideValues).length == 0
+      else
+        show = u.contains(fieldValues, ':present')
+      $target.toggle(show)
+
   ###*
   Forms with an `up-target` attribute are [submitted via AJAX](/up.submit)
   instead of triggering a full page reload.
@@ -625,6 +669,15 @@ up.form = (($) ->
   ###
   up.on 'change', '[up-validate]', (event, $field) ->
     validate($field)
+
+  ###*
+  TODO: Document me
+
+  @selector [up-toggle]
+  @stable
+  ###
+  up.on 'up:fragment:inserted change', '[up-toggle]', (event, $field) ->
+    toggle($field)
 
   ###*
   Observes this field or form and runs a callback when a value changes.
