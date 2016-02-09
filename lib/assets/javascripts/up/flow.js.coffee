@@ -177,7 +177,7 @@ up.flow = (($) ->
   @stable
   ###
   replace = (selectorOrElement, url, options) ->
-    u.debug("Replace %o with %o (options %o)", selectorOrElement, url, options)
+    console.groupCollapsed("Replace %o with %o (options %o)", selectorOrElement, url, options)
 
     options = u.options(options)
     target = resolveSelector(selectorOrElement, options.origin)
@@ -206,6 +206,8 @@ up.flow = (($) ->
 
     promise.fail (xhr, textStatus, errorThrown) ->
       processResponse(false, failTarget, url, request, xhr, options)
+
+    console.groupEnd()
 
     promise
 

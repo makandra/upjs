@@ -239,8 +239,9 @@ up.bus = (($) ->
   emit = (eventName, eventProps = {}) ->
     event = $.Event(eventName, eventProps)
     $target = eventProps.$element || $(document)
-    u.debug("Emitting %o on %o with props %o", eventName, $target, eventProps)
+    console.groupCollapsed("Emitting %o on %o with props %o", eventName, $target, eventProps)
     $target.trigger(event)
+    console.groupEnd()
     event
 
   ###*

@@ -208,21 +208,24 @@ up.syntax = (($) ->
       batch: options.batch
   
   applyCompiler = (compiler, $jqueryElement, nativeElement) ->
-    u.debug "Applying compiler %o on %o", compiler.selector, nativeElement
+    console.debug "Compiling %o on %o", compiler.selector, nativeElement
     destroyer = compiler.callback.apply(nativeElement, [$jqueryElement, data($jqueryElement)])
     if u.isFunction(destroyer)
       $jqueryElement.addClass(DESTROYABLE_CLASS)
       $jqueryElement.data(DESTROYER_KEY, destroyer)
 
   compile = ($fragment) ->
-    u.debug "Compiling fragment %o", $fragment
+    console.groupCollapsed "Compiling fragment %o", $fragment
     for compiler in compilers
       $matches = u.findWithSelf($fragment, compiler.selector)
       if $matches.length
+        console.groupCollapsed "Compiling %o on %o elements", compiler.selector, $matches.length
         if compiler.batch
           applyCompiler(compiler, $matches, $matches.get())
         else
           $matches.each -> applyCompiler(compiler, $(this), this)
+        console.groupEnd()
+    console.groupEnd()
 
   runDestroyers = ($fragment) ->
     u.findWithSelf($fragment, ".#{DESTROYABLE_CLASS}").each ->

@@ -250,6 +250,8 @@ up.proxy = (($) ->
   ###
   ajax = (options) ->
 
+    console.groupCollapsed('New request %o', options)
+
     forceCache = (options.cache == true)
     ignoreCache = (options.cache == false)
 
@@ -288,6 +290,8 @@ up.proxy = (($) ->
       #   This triggers `up:proxy:idle`.
       loadStarted()
       promise.always(loadEnded)
+
+    console.groupEnd()
 
     promise
 
