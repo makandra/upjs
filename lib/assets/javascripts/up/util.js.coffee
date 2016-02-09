@@ -775,7 +775,7 @@ up.util = (($) ->
   @internal
   ###
   intersect = (array1, array2) ->
-    select array, (element) ->
+    select array1, (element) ->
       contains(array2, element)
 
   ###*
