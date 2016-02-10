@@ -9,8 +9,9 @@ up.log = (($) ->
   @internal
   ###
   debug = (message, args...) ->
-    message = "[UP] #{message}"
-    up.browser.puts('debug', message, args...)
+    if message
+      message = "[UP] #{message}"
+      up.browser.puts('debug', message, args...)
 
   ###*
   Prints a logging message to the browser console.
@@ -21,16 +22,18 @@ up.log = (($) ->
   @internal
   ###
   out = (message, args...) ->
-    message = "[UP] #{message}"
-    up.browser.puts('log', message, args...)
+    if message
+      message = "[UP] #{message}"
+      up.browser.puts('log', message, args...)
 
   ###*
   @function up.log.warn
   @internal
   ###
   warn = (message, args...) ->
-    message = "[UP] #{message}"
-    up.browser.puts('warn', message, args...)
+    if message
+      message = "[UP] #{message}"
+      up.browser.puts('warn', message, args...)
 
   ###*
   - Makes sure the group always closes

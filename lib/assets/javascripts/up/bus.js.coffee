@@ -281,7 +281,7 @@ up.bus = (($) ->
   ###
   snapshot = ->
     for description in liveUpDescriptions
-      description._isDefault = true
+      description.isDefault = true
 
   ###*
   Resets the list of registered event listeners to the
@@ -290,7 +290,7 @@ up.bus = (($) ->
   @internal
   ###
   restoreSnapshot = ->
-    doomedDescriptions = u.reject(liveUpDescriptions, (description) -> description._isDefault)
+    doomedDescriptions = u.reject(liveUpDescriptions, (description) -> description.isDefault)
     unbind(description...) for description in doomedDescriptions
 
   ###*
