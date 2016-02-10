@@ -177,38 +177,34 @@ up.flow = (($) ->
   @stable
   ###
   replace = (selectorOrElement, url, options) ->
-    console.groupCollapsed("Replace %o with %o (options %o)", selectorOrElement, url, options)
+    up.log.group "Replace %o with %o (options %o)", selectorOrElement, url, options, ->
+      options = u.options(options)
+      target = resolveSelector(selectorOrElement, options.origin)
+      failTarget = u.option(options.failTarget, 'body')
+      failTarget = resolveSelector(failTarget, options.origin)
 
-    options = u.options(options)
-    target = resolveSelector(selectorOrElement, options.origin)
-    failTarget = u.option(options.failTarget, 'body')
-    failTarget = resolveSelector(failTarget, options.origin)
+      if !up.browser.canPushState() && options.history != false
+        unless options.preload
+          up.browser.loadPage(url, u.only(options, 'method', 'data'))
+        return u.unresolvablePromise()
 
-    if !up.browser.canPushState() && options.history != false
-      unless options.preload
-        up.browser.loadPage(url, u.only(options, 'method', 'data'))
-      return u.unresolvablePromise()
+      request =
+        url: url
+        method: options.method
+        data: options.data
+        target: target
+        failTarget: failTarget
+        cache: options.cache
+        preload: options.preload
+        headers: options.headers
 
-    request =
-      url: url
-      method: options.method
-      data: options.data
-      target: target
-      failTarget: failTarget
-      cache: options.cache
-      preload: options.preload
-      headers: options.headers
+      promise = up.proxy.ajax(request)
 
-    promise = up.proxy.ajax(request)
+      promise.done (html, textStatus, xhr) ->
+        processResponse(true, target, url, request, xhr, options)
 
-    promise.done (html, textStatus, xhr) ->
-      processResponse(true, target, url, request, xhr, options)
-
-    promise.fail (xhr, textStatus, errorThrown) ->
-      processResponse(false, failTarget, url, request, xhr, options)
-
-    console.groupEnd()
-
+      promise.fail (xhr, textStatus, errorThrown) ->
+        processResponse(false, failTarget, url, request, xhr, options)
     promise
 
   ###*

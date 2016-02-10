@@ -1,5 +1,6 @@
 #= require up/module
 #= require up/util
+#= require up/log
 #= require up/browser
 #= require up/bus
 #= require up/syntax

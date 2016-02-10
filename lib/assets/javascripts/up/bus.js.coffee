@@ -239,9 +239,8 @@ up.bus = (($) ->
   emit = (eventName, eventProps = {}) ->
     event = $.Event(eventName, eventProps)
     $target = eventProps.$element || $(document)
-    console.groupCollapsed("Emitting %o on %o with props %o", eventName, $target, eventProps)
-    $target.trigger(event)
-    console.groupEnd()
+    up.log.group "Emitting %o on %o with props %o", eventName, $target, eventProps, ->
+      $target.trigger(event)
     event
 
   ###*
@@ -330,6 +329,9 @@ up.bus = (($) ->
   ###
   boot = ->
     if up.browser.isSupported()
+      # Can't decouple this via the event bus, since up.bus would require
+      # up.browser.isSupported() and up.browser would require up.on()
+      up.browser.installPolyfills()
       up.emit('up:framework:boot')
 
   ###*

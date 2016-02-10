@@ -135,91 +135,6 @@ up.util = (($) ->
     element
 
   ###*
-  Prints a debugging message to the browser console.
-
-  @function up.debug
-  @param {String} message
-  @param {Array} args...
-  @internal
-  ###
-  debug = (message, args...) ->
-    message = "[UP] #{message}"
-    up.browser.puts('debug', message, args...)
-
-  ###*
-  Prints a logging message to the browser console.
-
-  @function up.log
-  @param {String} message
-  @param {Array} args...
-  @internal
-  ###
-  log = (message, args...) ->
-    message = "[UP] #{message}"
-    up.browser.puts('log', message, args...)
-
-  ###*
-  @function up.warn
-  @internal
-  ###
-  warn = (message, args...) ->
-    message = "[UP] #{message}"
-    up.browser.puts('warn', message, args...)
-
-  ###*
-  Throws a fatal error with the given message.
-
-  - The error will be printed to the [error console](https://developer.mozilla.org/en-US/docs/Web/API/Console/error)
-  - An [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) (exception) will be thrown, unwinding the current call stack
-  - The error message will be printed in a corner of the screen
-
-  \#\#\#\# Examples
-
-      up.error('Division by zero')
-      up.error('Unexpected result %o', result)
-
-  @function up.error
-  @internal
-  ###
-  error = (args...) ->
-    args[0] = "[UP] #{args[0]}"
-    up.browser.puts('error', args...)
-    asString = evalConsoleTemplate(args...)
-    $error = presence($('.up-error')) || $('<div class="up-error"></div>').prependTo('body')
-    $error.addClass('up-error')
-    $error.text(asString)
-    throw new Error(asString)
-
-  CONSOLE_PLACEHOLDERS = /\%[odisf]/g
-    
-  evalConsoleTemplate = (args...) ->
-    message = args[0]
-    i = 0
-    maxLength = 80
-    message.replace CONSOLE_PLACEHOLDERS, ->
-      i += 1
-      arg = args[i]
-      argType = (typeof arg)
-      if argType == 'string'
-        arg = arg.replace(/\s+/g, ' ')
-        arg = "#{arg.substr(0, maxLength)}…" if arg.length > maxLength
-        arg = "\"#{arg}\""
-      else if argType == 'undefined'
-        # JSON.stringify(undefined) is actually undefined
-        arg = 'undefined'
-      else if argType == 'number' || argType == 'function'
-        arg = arg.toString()
-      else
-        arg = JSON.stringify(arg)
-      if arg.length > maxLength
-        arg = "#{arg.substr(0, maxLength)} …"
-        # For truncated objects or functions, add a trailing brace so
-        # long log lines are easier to parse visually
-        if argType == 'object' || argType == 'function'
-          arg += " }"
-      arg
-
-  ###*
   Returns a CSS selector that matches the given element as good as possible.
 
   This uses, in decreasing order of priority:
@@ -239,7 +154,7 @@ up.util = (($) ->
     $element = $(element)
     selector = undefined
 
-    debug("Creating selector from element %o", $element.get(0))
+    up.log.out("Creating selector from element %o", $element.get(0))
 
     if upId = presence($element.attr("up-id"))
       selector = "[up-id='#{upId}']"
@@ -1348,7 +1263,7 @@ up.util = (($) ->
     log = (args...) ->
       if config.log
         args[0] = "[#{config.log}] #{args[0]}"
-        debug(args...)
+        up.log.out(args...)
 
     keys = ->
       Object.keys(store)
@@ -1538,6 +1453,19 @@ up.util = (($) ->
         query += encodeURIComponent(field.name) + '=' + encodeURIComponent(field.value)
     query
 
+  ###*
+  DOCUMENT ME
+
+  @experimental
+  ###
+  error = (args...) ->
+    up.log.error(args...)
+    asString = evalConsoleTemplate(args...)
+    $error = presence($('.up-error')) || $('<div class="up-error"></div>').prependTo('body')
+    $error.addClass('up-error')
+    $error.text(asString)
+    throw new Error(asString)
+
   requestDataAsArray: requestDataAsArray
   requestDataAsQueryString: requestDataAsQueryString
   offsetParent: offsetParent
@@ -1556,8 +1484,6 @@ up.util = (($) ->
   options: options
   option: option
   error: error
-  debug: debug
-  warn: warn
   each: each
   map: map
   times: times
@@ -1624,10 +1550,8 @@ up.util = (($) ->
   cache: cache
   unwrapElement: unwrapElement
   multiSelector: multiSelector
-  evalConsoleTemplate: evalConsoleTemplate
+  error: error
 
 )($)
 
 up.error = up.util.error
-up.warn = up.util.warn
-up.debug = up.util.debug

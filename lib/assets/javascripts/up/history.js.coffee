@@ -115,7 +115,7 @@ up.history = (($) ->
         fullMethod = "#{method}State" # resulting in either pushState or replaceState
         state = buildState()
         # console.log("[#{method}] URL %o with state %o", url, state)
-        u.debug("Changing history to URL %o (%o)", url, method)
+        up.log.out("Changing history to URL %o (%o)", url, method)
         # previousUrl = url
         window.history[fullMethod](state, '', url)
         observeNewUrl(currentUrl())
@@ -127,24 +127,24 @@ up.history = (($) ->
 
   restoreStateOnPop = (state) ->
     url = currentUrl()
-    u.debug "Restoring state %o (now on #{url})", state
-    popSelector = config.popTargets.join(', ')
-    up.replace popSelector, url,
-      history: false,
-      reveal: false,
-      transition: 'none',
-      saveScroll: false # since the URL was already changed by the browser, don't save scroll state
-      restoreScroll: config.restoreScroll
+    up.log.group "Restoring state %o (now on #{url})", state, ->
+      popSelector = config.popTargets.join(', ')
+      up.replace popSelector, url,
+        history: false,
+        reveal: false,
+        transition: 'none',
+        saveScroll: false # since the URL was already changed by the browser, don't save scroll state
+        restoreScroll: config.restoreScroll
 
   pop = (event) ->
-    u.debug("History state popped to URL %o", currentUrl())
-    observeNewUrl(currentUrl())
-    up.layout.saveScroll(url: previousUrl)
-    state = event.originalEvent.state
-    if state?.fromUp
-      restoreStateOnPop(state)
-    else
-      u.debug 'Discarding unknown state %o', state
+    up.log.group "History state popped to URL %o", currentUrl(), ->
+      observeNewUrl(currentUrl())
+      up.layout.saveScroll(url: previousUrl)
+      state = event.originalEvent.state
+      if state?.fromUp
+        restoreStateOnPop(state)
+      else
+        up.log.out 'Ignoring state that was not pushed by Up.js: %o', state
 
   # up.on 'framework:ready', ->
   if up.browser.canPushState()

@@ -213,58 +213,58 @@ up.layout = (($) ->
   @stable
   ###
   reveal = (elementOrSelector, options) ->
-    u.debug('Revealing %o', elementOrSelector)
-    options = u.options(options)
-    $element = $(elementOrSelector)
-    $viewport = if options.viewport then $(options.viewport) else viewportOf($element)
+    up.log.group 'Revealing %o', elementOrSelector, ->
+      options = u.options(options)
+      $element = $(elementOrSelector)
+      $viewport = if options.viewport then $(options.viewport) else viewportOf($element)
 
-    snap = u.option(options.snap, config.snap)
+      snap = u.option(options.snap, config.snap)
 
-    viewportIsDocument = $viewport.is(document)
-    viewportHeight = if viewportIsDocument then u.clientSize().height else $viewport.height()
-    originalScrollPos = $viewport.scrollTop()
-    newScrollPos = originalScrollPos
+      viewportIsDocument = $viewport.is(document)
+      viewportHeight = if viewportIsDocument then u.clientSize().height else $viewport.height()
+      originalScrollPos = $viewport.scrollTop()
+      newScrollPos = originalScrollPos
 
-    offsetShift = undefined
-    obstruction = undefined
+      offsetShift = undefined
+      obstruction = undefined
 
-    if viewportIsDocument
-      obstruction = measureObstruction()
-      # Within the body, $.position will always return the distance
-      # from the document top and *not* the distance of the viewport
-      # top. This is what the calculations below expect, so don't shift.
-      offsetShift = 0
-    else
-      obstruction = { top: 0, bottom: 0 }
-      # When the scrolled element is not <body> but instead a container
-      # with overflow-y: scroll, $.position returns the position the
-      # viewport's top edge instead of the first row of  the canvas buffer.
-      # http://codepen.io/anon/pen/jPojGE
-      offsetShift = originalScrollPos
+      if viewportIsDocument
+        obstruction = measureObstruction()
+        # Within the body, $.position will always return the distance
+        # from the document top and *not* the distance of the viewport
+        # top. This is what the calculations below expect, so don't shift.
+        offsetShift = 0
+      else
+        obstruction = { top: 0, bottom: 0 }
+        # When the scrolled element is not <body> but instead a container
+        # with overflow-y: scroll, $.position returns the position the
+        # viewport's top edge instead of the first row of  the canvas buffer.
+        # http://codepen.io/anon/pen/jPojGE
+        offsetShift = originalScrollPos
 
-    predictFirstVisibleRow = -> newScrollPos + obstruction.top
-    predictLastVisibleRow = -> newScrollPos + viewportHeight - obstruction.bottom - 1
+      predictFirstVisibleRow = -> newScrollPos + obstruction.top
+      predictLastVisibleRow = -> newScrollPos + viewportHeight - obstruction.bottom - 1
 
-    elementDims = u.measure($element, relative: $viewport)
-    firstElementRow = elementDims.top + offsetShift
+      elementDims = u.measure($element, relative: $viewport)
+      firstElementRow = elementDims.top + offsetShift
 
-    lastElementRow = firstElementRow + Math.min(elementDims.height, config.substance) - 1
+      lastElementRow = firstElementRow + Math.min(elementDims.height, config.substance) - 1
 
-    if lastElementRow > predictLastVisibleRow()
-      # Try to show the full height of the element
-      newScrollPos += (lastElementRow - predictLastVisibleRow())
+      if lastElementRow > predictLastVisibleRow()
+        # Try to show the full height of the element
+        newScrollPos += (lastElementRow - predictLastVisibleRow())
 
-    if firstElementRow < predictFirstVisibleRow() || options.top
-      # If the full element does not fit, scroll to the first row
-      newScrollPos = firstElementRow - obstruction.top
+      if firstElementRow < predictFirstVisibleRow() || options.top
+        # If the full element does not fit, scroll to the first row
+        newScrollPos = firstElementRow - obstruction.top
 
-    if newScrollPos < snap
-      newScrollPos = 0
+      if newScrollPos < snap
+        newScrollPos = 0
 
-    if newScrollPos != originalScrollPos
-      scroll($viewport, newScrollPos, options)
-    else
-      u.resolvedDeferred()
+      if newScrollPos != originalScrollPos
+        scroll($viewport, newScrollPos, options)
+      else
+        u.resolvedDeferred()
 
   viewportSelector = ->
     u.multiSelector(config.viewports)
@@ -359,7 +359,7 @@ up.layout = (($) ->
   saveScroll = (options = {}) ->
     url = u.option(options.url, up.history.url())
     tops = u.option(options.tops, scrollTops())
-    u.debug('Saving scroll positions for URL %o: %o', url, tops)
+    up.log.out('Saving scroll positions for URL %o: %o', url, tops)
     lastScrollTops.set(url, tops)
 
   ###*
@@ -390,16 +390,15 @@ up.layout = (($) ->
 
     tops = lastScrollTops.get(url)
 
-    u.debug('Restoring scroll positions for URL %o (viewports are %o, saved tops are %o)', url, $viewports, tops)
+    up.log.group 'Restoring scroll positions for URL %o (viewports are %o, saved tops are %o)', url, $viewports, tops, ->
+      for key, scrollTop of tops
+        right = if key == 'document' then document else key
+        $matchingViewport = $viewports.filter(right)
+        scroll($matchingViewport, scrollTop, duration: 0)
 
-    for key, scrollTop of tops
-      right = if key == 'document' then document else key
-      $matchingViewport = $viewports.filter(right)
-      scroll($matchingViewport, scrollTop, duration: 0)
-
-    # Since scrolling happens without animation, we don't need to
-    # join promises from the up.scroll call above
-    u.resolvedDeferred()
+      # Since scrolling happens without animation, we don't need to
+      # join promises from the up.scroll call above
+      u.resolvedDeferred()
 
   ###*
   @function up.layout.revealOrRestoreScroll

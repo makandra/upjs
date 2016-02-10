@@ -201,8 +201,6 @@ up.browser = (($) ->
     console.groupCollapsed ||= (args...) -> puts('groupCollapsed', args...)
     console.groupEnd ||= (args...) -> puts('groupEnd', args...)
 
-  up.on 'up:framework:boot', installPolyfills
-
   url: url
   loadPage: loadPage
   confirm: confirm
@@ -211,6 +209,7 @@ up.browser = (($) ->
   canInputEvent: canInputEvent
   canLogSubstitution: canLogSubstitution
   isSupported: isSupported
+  installPolyfills: installPolyfills
   puts: puts
 
 )(jQuery)

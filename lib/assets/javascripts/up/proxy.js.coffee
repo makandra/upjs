@@ -380,7 +380,7 @@ up.proxy = (($) ->
       queue(request)
 
   queue = (request) ->
-    u.debug('Queuing URL %o', request.url)
+    up.log.out('Queuing URL %o', request.url)
     deferred = $.Deferred()
     entry =
       deferred: deferred
@@ -389,29 +389,29 @@ up.proxy = (($) ->
     deferred.promise()
 
   load = (request) ->
-    u.debug('Fetching %o via %o', request.url, request.method)
-    up.emit('up:proxy:load', request)
+    up.log.group 'Fetching %o via %o', request.url, request.method, ->
+      up.emit('up:proxy:load', request)
 
-    # We will modify the request below for features like method wrapping.
-    # Let's not change the original request which would confuse API clients
-    # and cache key logic.
-    request = u.copy(request)
+      # We will modify the request below for features like method wrapping.
+      # Let's not change the original request which would confuse API clients
+      # and cache key logic.
+      request = u.copy(request)
 
-    request.headers ||= {}
-    request.headers['X-Up-Target'] = request.target
-    request.data = u.requestDataAsArray(request.data)
+      request.headers ||= {}
+      request.headers['X-Up-Target'] = request.target
+      request.data = u.requestDataAsArray(request.data)
 
-    if u.contains(config.wrapMethods, request.method)
-      request.data.push
-        name: config.wrapMethodParam
-        value: request.method
-      request.method = 'POST'
+      if u.contains(config.wrapMethods, request.method)
+        request.data.push
+          name: config.wrapMethodParam
+          value: request.method
+        request.method = 'POST'
 
-    promise = $.ajax(request)
-    promise.always ->
-      up.emit('up:proxy:received', request)
-      pokeQueue()
-    promise
+      promise = $.ajax(request)
+      promise.always ->
+        up.emit('up:proxy:received', request)
+        pokeQueue()
+      promise
 
   pokeQueue = ->
     if entry = queuedRequests.shift()
@@ -472,11 +472,11 @@ up.proxy = (($) ->
 
     method = up.link.followMethod($link, options)
     if isIdempotent(method: method)
-      u.debug("Preloading %o", $link)
-      options.preload = true
-      up.follow($link, options)
+      up.log.group "Preloading %o", $link, ->
+        options.preload = true
+        up.follow($link, options)
     else
-      u.debug("Won't preload %o due to unsafe method %o", $link, method)
+      up.log.out("Won't preload %o due to unsafe method %o", $link, method)
       u.resolvedPromise()
 
   ###*

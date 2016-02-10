@@ -218,7 +218,7 @@ up.form = (($) ->
     callback = null
 
     if u.isGiven(options.change)
-      up.error('up.observe now takes the change callback as the last argument')
+      u.error('up.observe now takes the change callback as the last argument')
 
     rawCallback = u.option(u.presentAttr($element, 'op-observe'), callbackArg)
     if u.isString(rawCallback)
@@ -334,7 +334,7 @@ up.form = (($) ->
         $field.closest(resolvedDefault).length
       )
     if u.isBlank(target)
-      error('Could not find default validation target for %o (tried ancestors %o)', $field, config.validateTargets)
+      u.error('Could not find default validation target for %o (tried ancestors %o)', $field, config.validateTargets)
     unless u.isString(target)
       target = u.selectorForElement(target)
     target
