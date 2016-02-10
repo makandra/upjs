@@ -17,4 +17,3 @@
 #= require up/rails
 
 up.boot()
-

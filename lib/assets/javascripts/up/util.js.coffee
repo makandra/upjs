@@ -147,6 +147,18 @@ up.util = (($) ->
     up.browser.puts('debug', message, args...)
 
   ###*
+  Prints a logging message to the browser console.
+
+  @function up.log
+  @param {String} message
+  @param {Array} args...
+  @internal
+  ###
+  log = (message, args...) ->
+    message = "[UP] #{message}"
+    up.browser.puts('log', message, args...)
+
+  ###*
   @function up.warn
   @internal
   ###

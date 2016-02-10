@@ -215,7 +215,7 @@ up.syntax = (($) ->
       $jqueryElement.data(DESTROYER_KEY, destroyer)
 
   compile = ($fragment) ->
-    console.groupCollapsed "Compiling fragment %o", $fragment
+    console.groupCollapsed "Compiling fragment %o", $fragment.get(0)
     for compiler in compilers
       $matches = u.findWithSelf($fragment, compiler.selector)
       if $matches.length

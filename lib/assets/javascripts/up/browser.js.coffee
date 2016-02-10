@@ -193,6 +193,16 @@ up.browser = (($) ->
   isSupported = ->
     (!isIE8OrWorse()) && isRecentJQuery()
 
+  ###*
+  @internal
+  ###
+  installPolyfills = ->
+    console.group ||= (args...) -> puts('group', args...)
+    console.groupCollapsed ||= (args...) -> puts('groupCollapsed', args...)
+    console.groupEnd ||= (args...) -> puts('groupEnd', args...)
+
+  up.on 'up:framework:boot', installPolyfills
+
   url: url
   loadPage: loadPage
   confirm: confirm
