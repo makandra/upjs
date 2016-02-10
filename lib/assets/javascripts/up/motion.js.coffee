@@ -270,7 +270,7 @@ up.motion = (($) ->
   
   finishGhosting = ($element) ->
     if existingGhosting = $element.data(GHOSTING_PROMISE_KEY)
-      up.log.out('Canceling existing ghosting on %o', $element)
+      up.puts('Canceling existing ghosting on %o', $element)
       existingGhosting.resolve?()
       
   assertIsDeferred = (object, source) ->
@@ -343,7 +343,10 @@ up.motion = (($) ->
   @stable
   ###  
   morph = (source, target, transitionOrName, options) ->
-    up.log.group 'Morphing %o to %o (using %o)', source, target, transitionOrName, ->
+    if transitionOrName == 'none'
+      transitionOrName = false
+
+    up.log.group ('Morphing %o to %o (using %o)' if transitionOrName), source, target, transitionOrName, ->
 
       $old = $(source)
       $new = $(target)
@@ -355,7 +358,7 @@ up.motion = (($) ->
         finish($old)
         finish($new)
 
-        if transitionOrName == 'none' || transitionOrName == false
+        if !transitionOrName
           return skipMorph($old, $new, parsedOptions)
         else if animation = animations[transitionOrName]
           skipMorph($old, $new, parsedOptions)

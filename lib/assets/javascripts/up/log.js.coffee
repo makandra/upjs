@@ -1,5 +1,8 @@
 up.log = (($) ->
 
+  prefix = (message) ->
+    "ᴜᴘ #{message}"
+
   ###*
   Prints a debugging message to the browser console.
 
@@ -10,21 +13,19 @@ up.log = (($) ->
   ###
   debug = (message, args...) ->
     if message
-      message = "[UP] #{message}"
-      up.browser.puts('debug', message, args...)
+      up.browser.puts('debug', prefix(message), args...)
 
   ###*
   Prints a logging message to the browser console.
 
-  @function up.log.out
+  @function up.puts
   @param {String} message
   @param {Array} args...
   @internal
   ###
-  out = (message, args...) ->
+  puts = (message, args...) ->
     if message
-      message = "[UP] #{message}"
-      up.browser.puts('log', message, args...)
+      up.browser.puts('log', prefix(message), args...)
 
   ###*
   @function up.log.warn
@@ -32,8 +33,7 @@ up.log = (($) ->
   ###
   warn = (message, args...) ->
     if message
-      message = "[UP] #{message}"
-      up.browser.puts('warn', message, args...)
+      up.browser.puts('warn', prefix(message), args...)
 
   ###*
   - Makes sure the group always closes
@@ -44,11 +44,14 @@ up.log = (($) ->
   ###
   group = (message, args...) ->
     block = args.pop() # Coffeescript copies the arguments array
-    up.browser.puts('groupCollapsed', message, args...) if message
-    try
+    if message
+      up.browser.puts('groupCollapsed', prefix(message), args...)
+      try
+        block()
+      finally
+        console.groupEnd() if message
+    else
       block()
-    finally
-      console.groupEnd() if message
 
   ###*
   Throws a fatal error with the given message.
@@ -66,43 +69,16 @@ up.log = (($) ->
   @internal
   ###
   error = (args...) ->
-    args[0] = "[UP] #{args[0]}"
-    up.browser.puts('error', args...)
+    if args[0]
+      args[0] = prefix(args[0])
+      up.browser.puts('error', args...)
 
-  CONSOLE_PLACEHOLDERS = /\%[odisf]/g
-
-  evalConsoleTemplate = (args...) ->
-    message = args[0]
-    i = 0
-    maxLength = 80
-    message.replace CONSOLE_PLACEHOLDERS, ->
-      i += 1
-      arg = args[i]
-      argType = (typeof arg)
-      if argType == 'string'
-        arg = arg.replace(/\s+/g, ' ')
-        arg = "#{arg.substr(0, maxLength)}…" if arg.length > maxLength
-        arg = "\"#{arg}\""
-      else if argType == 'undefined'
-        # JSON.stringify(undefined) is actually undefined
-        arg = 'undefined'
-      else if argType == 'number' || argType == 'function'
-        arg = arg.toString()
-      else
-        arg = JSON.stringify(arg)
-      if arg.length > maxLength
-        arg = "#{arg.substr(0, maxLength)} …"
-        # For truncated objects or functions, add a trailing brace so
-        # long log lines are easier to parse visually
-        if argType == 'object' || argType == 'function'
-          arg += " }"
-      arg
-
-  out: out
+  puts: puts
   debug: debug
   error: error
   warn: warn
   group: group
-  evalConsoleTemplate: evalConsoleTemplate
 
 )(jQuery)
+
+up.puts = up.log.puts

@@ -177,41 +177,40 @@ up.flow = (($) ->
   @stable
   ###
   replace = (selectorOrElement, url, options) ->
-    up.log.group "Replace %o with %o (options %o)", selectorOrElement, url, options, ->
-      options = u.options(options)
-      target = resolveSelector(selectorOrElement, options.origin)
-      failTarget = u.option(options.failTarget, 'body')
-      failTarget = resolveSelector(failTarget, options.origin)
+    up.puts "Replacing %o with %o (%o)", selectorOrElement, url, options
+    options = u.options(options)
+    target = resolveSelector(selectorOrElement, options.origin)
+    failTarget = u.option(options.failTarget, 'body')
+    failTarget = resolveSelector(failTarget, options.origin)
 
-      if !up.browser.canPushState() && options.history != false
-        unless options.preload
-          up.browser.loadPage(url, u.only(options, 'method', 'data'))
-        return u.unresolvablePromise()
+    if !up.browser.canPushState() && options.history != false
+      unless options.preload
+        up.browser.loadPage(url, u.only(options, 'method', 'data'))
+      return u.unresolvablePromise()
 
-      request =
-        url: url
-        method: options.method
-        data: options.data
-        target: target
-        failTarget: failTarget
-        cache: options.cache
-        preload: options.preload
-        headers: options.headers
+    request =
+      url: url
+      method: options.method
+      data: options.data
+      target: target
+      failTarget: failTarget
+      cache: options.cache
+      preload: options.preload
+      headers: options.headers
 
-      promise = up.proxy.ajax(request)
+    promise = up.proxy.ajax(request)
 
-      promise.done (html, textStatus, xhr) ->
-        processResponse(true, target, url, request, xhr, options)
+    promise.done (html, textStatus, xhr) ->
+      processResponse(true, target, url, request, xhr, options)
 
-      promise.fail (xhr, textStatus, errorThrown) ->
-        processResponse(false, failTarget, url, request, xhr, options)
+    promise.fail (xhr, textStatus, errorThrown) ->
+      processResponse(false, failTarget, url, request, xhr, options)
     promise
 
   ###*
   @internal
   ###
   processResponse = (isSuccess, selector, url, request, xhr, options) ->
-
     options.method = u.normalizeMethod(u.option(u.methodFromXhr(xhr), options.method))
     options.title = u.option(u.titleFromXhr(xhr), options.title)
     isReloadable = (options.method == 'GET')
@@ -499,7 +498,9 @@ up.flow = (($) ->
   ###
   destroy = (selectorOrElement, options) ->
     $element = $(selectorOrElement)
-    if up.bus.nobodyPrevents('up:fragment:destroy', $element: $element)
+    unless $element.is('.up-placeholder, .up-tooltip, .up-modal, .up-popup')
+      emitMessage = 'Destroyed fragment'
+    if up.bus.nobodyPrevents('up:fragment:destroy', $element: $element, message: emitMessage)
       options = u.options(options, animation: false)
       animateOptions = up.motion.animateOptions(options)
       $element.addClass('up-destroying')
@@ -513,7 +514,7 @@ up.flow = (($) ->
       animationDeferred.then ->
         # Emit this while $element is still part of the DOM, so event
         # listeners bound to the document will receive the event.
-        up.emit('up:fragment:destroyed', $element: $element)
+        up.emit 'up:fragment:destroyed', $element: $element, message: emitMessage
         $element.remove()
       animationDeferred
     else

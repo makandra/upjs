@@ -207,7 +207,7 @@ up.syntax = (($) ->
       batch: options.batch
   
   applyCompiler = (compiler, $jqueryElement, nativeElement) ->
-    up.log.out ("Compiling %o on %o" unless compiler.isDefault), compiler.selector, nativeElement
+    up.puts ("Compiling %o on %o" unless compiler.isDefault), compiler.selector, nativeElement
     destroyer = compiler.callback.apply(nativeElement, [$jqueryElement, data($jqueryElement)])
     if u.isFunction(destroyer)
       $jqueryElement.addClass(DESTROYABLE_CLASS)
@@ -312,7 +312,9 @@ up.syntax = (($) ->
   ###
   hello = (selectorOrElement, options) ->
     $element = $(selectorOrElement)
-    eventAttrs = u.options(options, $element: $element)
+    eventAttrs = u.options options,
+      $element: $element
+      message: 'Fragment inserted'
     up.emit('up:fragment:inserted', eventAttrs)
     $element
 

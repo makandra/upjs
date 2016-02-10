@@ -122,7 +122,7 @@ up.proxy = (($) ->
     size: -> config.cacheSize
     expiry: -> config.cacheExpiry
     key: cacheKey
-    log: 'up.proxy'
+    # log: 'up.proxy'
 
   ###*
   Returns a cached response for the given request.
@@ -250,12 +250,11 @@ up.proxy = (($) ->
   ###
   ajax = (options) ->
 
-    console.groupCollapsed('New request %o', options)
-
     forceCache = (options.cache == true)
     ignoreCache = (options.cache == false)
 
     request = u.only(options, 'url', 'method', 'data', 'target', 'headers', '_normalized')
+    request = normalizeRequest(request)
 
     pending = true
 
@@ -269,6 +268,7 @@ up.proxy = (($) ->
     # we use it unless `options.cache` is explicitly set to `false`.
     # The promise might still be pending.
     else if (promise = get(request)) && !ignoreCache
+      up.puts 'Re-using cached response for %o', "#{request.method} #{request.url}"
       pending = (promise.state() == 'pending')
     # If no existing promise is available, we make a network request.
     else
@@ -333,7 +333,7 @@ up.proxy = (($) ->
       # we wrap the mission in a function for scheduling below.
       emission = ->
         if busy() # a fast response might have beaten the delay
-          up.emit('up:proxy:busy')
+          up.emit('up:proxy:busy', message: 'Proxy is busy')
           busyEventEmitted = true
       if config.busyDelay > 0
         busyDelayTimer = setTimeout(emission, config.busyDelay)
@@ -362,7 +362,7 @@ up.proxy = (($) ->
   loadEnded = ->
     pendingCount -= 1
     if idle() && busyEventEmitted
-      up.emit('up:proxy:idle')
+      up.emit('up:proxy:idle', message: 'Proxy is idle')
       busyEventEmitted = false
 
   ###*
@@ -380,7 +380,7 @@ up.proxy = (($) ->
       queue(request)
 
   queue = (request) ->
-    up.log.out('Queuing URL %o', request.url)
+    up.puts('Queuing request for %o', "#{request.method} #{request.url}")
     deferred = $.Deferred()
     entry =
       deferred: deferred
@@ -389,29 +389,31 @@ up.proxy = (($) ->
     deferred.promise()
 
   load = (request) ->
-    up.log.group 'Fetching %o via %o', request.url, request.method, ->
-      up.emit('up:proxy:load', request)
+    up.emit('up:proxy:load', u.merge(request, message: ['Loading %o', "#{request.method} #{request.url}"]))
 
-      # We will modify the request below for features like method wrapping.
-      # Let's not change the original request which would confuse API clients
-      # and cache key logic.
-      request = u.copy(request)
+    # We will modify the request below for features like method wrapping.
+    # Let's not change the original request which would confuse API clients
+    # and cache key logic.
+    request = u.copy(request)
 
-      request.headers ||= {}
-      request.headers['X-Up-Target'] = request.target
-      request.data = u.requestDataAsArray(request.data)
+    request.headers ||= {}
+    request.headers['X-Up-Target'] = request.target
+    request.data = u.requestDataAsArray(request.data)
 
-      if u.contains(config.wrapMethods, request.method)
-        request.data.push
-          name: config.wrapMethodParam
-          value: request.method
-        request.method = 'POST'
+    if u.contains(config.wrapMethods, request.method)
+      request.data.push
+        name: config.wrapMethodParam
+        value: request.method
+      request.method = 'POST'
 
-      promise = $.ajax(request)
-      promise.always ->
-        up.emit('up:proxy:received', request)
-        pokeQueue()
-      promise
+    promise = $.ajax(request)
+    promise.done (data, textStatus, xhr) -> responseReceived(request, xhr)
+    promise.fail (xhr, textStatus, errorThrown) -> responseReceived(request, xhr)
+    promise
+
+  responseReceived = (request, xhr) ->
+    up.emit('up:proxy:received', u.merge(request, message: ['Server responded with %o (%o bytes)', "#{xhr.status} #{xhr.statusText}", xhr.responseText?.length]))
+    pokeQueue()
 
   pokeQueue = ->
     if entry = queuedRequests.shift()
@@ -476,7 +478,7 @@ up.proxy = (($) ->
         options.preload = true
         up.follow($link, options)
     else
-      up.log.out("Won't preload %o due to unsafe method %o", $link, method)
+      up.puts("Won't preload %o due to unsafe method %o", $link, method)
       u.resolvedPromise()
 
   ###*

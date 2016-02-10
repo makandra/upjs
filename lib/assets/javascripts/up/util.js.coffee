@@ -135,6 +135,15 @@ up.util = (($) ->
     element
 
   ###*
+  @function $create
+  ###
+  $createPlaceholder = (selector, container = document.body) ->
+    $placeholder = $createElementFromSelector(selector)
+    $placeholder.addClass('up-placeholder')
+    $placeholder.appendTo(container)
+    $placeholder
+
+  ###*
   Returns a CSS selector that matches the given element as good as possible.
 
   This uses, in decreasing order of priority:
@@ -154,7 +163,7 @@ up.util = (($) ->
     $element = $(element)
     selector = undefined
 
-    up.log.out("Creating selector from element %o", $element.get(0))
+    up.puts("Creating selector from element %o", $element.get(0))
 
     if upId = presence($element.attr("up-id"))
       selector = "[up-id='#{upId}']"
@@ -1263,7 +1272,7 @@ up.util = (($) ->
     log = (args...) ->
       if config.log
         args[0] = "[#{config.log}] #{args[0]}"
-        up.log.out(args...)
+        up.puts(args...)
 
     keys = ->
       Object.keys(store)
@@ -1309,7 +1318,7 @@ up.util = (($) ->
         delete store[oldestKey] if oldestKey
 
     alias = (oldKey, newKey) ->
-      value = get(oldKey)
+      value = get(oldKey, silent: true)
       if isDefined(value)
         set(newKey, value)
 
@@ -1334,19 +1343,19 @@ up.util = (($) ->
       else
         true
 
-    get = (key, fallback = undefined) ->
+    get = (key, options = {}) ->
       storeKey = normalizeStoreKey(key)
       if entry = store[storeKey]
         if isFresh(entry)
-          log("Cache hit for %o", key)
+          log("Cache hit for %o", key) unless options.silent
           entry.value
         else
-          log("Discarding stale cache entry for %o", key)
+          log("Discarding stale cache entry for %o", key) unless options.silent
           remove(key)
-          fallback
+          undefined
       else
-        log("Cache miss for %o", key)
-        fallback
+        log("Cache miss for %o", key) unless options.silent
+        undefined
 
     alias: alias
     get: get
@@ -1460,7 +1469,7 @@ up.util = (($) ->
   ###
   error = (args...) ->
     up.log.error(args...)
-    asString = evalConsoleTemplate(args...)
+    asString = up.browser.sprintf(args...)
     $error = presence($('.up-error')) || $('<div class="up-error"></div>').prependTo('body')
     $error.addClass('up-error')
     $error.text(asString)
@@ -1477,6 +1486,7 @@ up.util = (($) ->
   normalizeMethod: normalizeMethod
   createElementFromHtml: createElementFromHtml
   $createElementFromSelector: $createElementFromSelector
+  $createPlaceholder: $createPlaceholder
   selectorForElement: selectorForElement
   extend: extend
   copy: copy

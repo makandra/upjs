@@ -359,7 +359,7 @@ up.layout = (($) ->
   saveScroll = (options = {}) ->
     url = u.option(options.url, up.history.url())
     tops = u.option(options.tops, scrollTops())
-    up.log.out('Saving scroll positions for URL %o: %o', url, tops)
+    up.puts('Saving scroll positions for URL %o: %o', url, tops)
     lastScrollTops.set(url, tops)
 
   ###*

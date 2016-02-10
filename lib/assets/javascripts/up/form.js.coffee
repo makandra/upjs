@@ -781,7 +781,7 @@ up.form = (($) ->
 
   @selector [up-hide-for]
   @param up-hide-for
-    A space-separated list of values for which to show this element.
+    A space-separated list of values for which to hide this element.
   @stable
   ###
 

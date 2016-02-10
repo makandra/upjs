@@ -106,6 +106,7 @@ up.history = (($) ->
   @experimental
   ###
   push = (url, options) ->
+    up.puts("Current location is now %o", url)
     manipulate('push', url, options)
 
   manipulate = (method, url, options) ->
@@ -114,9 +115,6 @@ up.history = (($) ->
       if up.browser.canPushState()
         fullMethod = "#{method}State" # resulting in either pushState or replaceState
         state = buildState()
-        # console.log("[#{method}] URL %o with state %o", url, state)
-        up.log.out("Changing history to URL %o (%o)", url, method)
-        # previousUrl = url
         window.history[fullMethod](state, '', url)
         observeNewUrl(currentUrl())
       else
@@ -144,7 +142,7 @@ up.history = (($) ->
       if state?.fromUp
         restoreStateOnPop(state)
       else
-        up.log.out 'Ignoring state that was not pushed by Up.js: %o', state
+        up.puts 'Ignoring state that was not pushed by Up.js: %o', state
 
   # up.on 'framework:ready', ->
   if up.browser.canPushState()
