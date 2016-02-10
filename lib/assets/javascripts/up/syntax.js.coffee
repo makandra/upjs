@@ -207,7 +207,7 @@ up.syntax = (($) ->
       batch: options.batch
   
   applyCompiler = (compiler, $jqueryElement, nativeElement) ->
-    up.puts ("Compiling %o on %o" unless compiler.isDefault), compiler.selector, nativeElement
+    up.puts ("Compiling '%s' on %o" unless compiler.isDefault), compiler.selector, nativeElement
     destroyer = compiler.callback.apply(nativeElement, [$jqueryElement, data($jqueryElement)])
     if u.isFunction(destroyer)
       $jqueryElement.addClass(DESTROYABLE_CLASS)
@@ -218,7 +218,7 @@ up.syntax = (($) ->
       for compiler in compilers
         $matches = u.findWithSelf($fragment, compiler.selector)
         if $matches.length
-          up.log.group ("Compiling %o on %o element(s)" unless compiler.isDefault), compiler.selector, $matches.length, ->
+          up.log.group ("Compiling '%s' on %d element(s)" unless compiler.isDefault), compiler.selector, $matches.length, ->
             if compiler.batch
               applyCompiler(compiler, $matches, $matches.get())
             else
@@ -314,7 +314,7 @@ up.syntax = (($) ->
     $element = $(selectorOrElement)
     eventAttrs = u.options options,
       $element: $element
-      message: 'Fragment inserted'
+      message: ['Inserted fragment %o', $element.get(0)]
     up.emit('up:fragment:inserted', eventAttrs)
     $element
 

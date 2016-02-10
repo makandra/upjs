@@ -109,7 +109,7 @@ up.popup = (($) ->
         left: linkBox.left
         bottom: linkBox.top
       else
-        u.error("Unknown position %o", position)
+        u.error("Unknown position option '%s'", position)
     $popup = $('.up-popup')
     $popup.attr('up-position', position)
     $popup.css(css)

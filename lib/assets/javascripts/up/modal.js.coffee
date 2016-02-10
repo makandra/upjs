@@ -359,7 +359,7 @@ up.modal = (($) ->
   close = (options) ->
     $modal = $('.up-modal')
     if $modal.length
-      if up.bus.nobodyPrevents('up:modal:close', $element: $modal)
+      if up.bus.nobodyPrevents('up:modal:close', $element: $modal, message: 'Closing modal')
         options = u.options(options,
           animation: config.closeAnimation,
           url: $modal.attr('up-covered-url')

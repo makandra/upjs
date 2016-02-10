@@ -62,15 +62,15 @@ up.browser = (($) ->
   CONSOLE_PLACEHOLDERS = /\%[odisf]/g
 
   ###*
+  See https://developer.mozilla.org/en-US/docs/Web/API/Console#Using_string_substitutions
+
   @function up.browser.sprintf
   @internal
   ###
-  sprintf = (args...) ->
-    message = args[0]
+  sprintf = (message, args...) ->
     i = 0
     maxLength = 80
     message.replace CONSOLE_PLACEHOLDERS, ->
-      i += 1
       arg = args[i]
       argType = (typeof arg)
       if argType == 'string'
@@ -90,6 +90,7 @@ up.browser = (($) ->
         # long log lines are easier to parse visually
         if argType == 'object' || argType == 'function'
           arg += " }"
+      i += 1
       arg
 
   url = ->

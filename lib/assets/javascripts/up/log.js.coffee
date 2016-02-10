@@ -54,24 +54,12 @@ up.log = (($) ->
       block()
 
   ###*
-  Throws a fatal error with the given message.
-
-  - The error will be printed to the [error console](https://developer.mozilla.org/en-US/docs/Web/API/Console/error)
-  - An [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) (exception) will be thrown, unwinding the current call stack
-  - The error message will be printed in a corner of the screen
-
-  \#\#\#\# Examples
-
-      up.error('Division by zero')
-      up.error('Unexpected result %o', result)
-
   @function up.log.error
   @internal
   ###
-  error = (args...) ->
-    if args[0]
-      args[0] = prefix(args[0])
-      up.browser.puts('error', args...)
+  error = (message, args...) ->
+    if message
+      up.browser.puts('error', prefix(message), args...)
 
   puts: puts
   debug: debug

@@ -242,24 +242,32 @@ up.bus = (($) ->
   ###
   emit = (eventName, eventProps = {}) ->
     event = $.Event(eventName, eventProps)
-    $target = eventProps.$element || $(document)
-    if eventProps.hasOwnProperty('message')
-      logMessage = eventProps.message
-      delete eventProps.message
-      logArgs = []
-      if u.isArray(logMessage)
-        [logMessage, logArgs...] = logMessage
-      if logMessage
-        logMessage = "#{logMessage} (%o (%o) on %o)"
-        logArgs.push(eventName)
-        logArgs.push(eventProps)
-        logArgs.push($target.get(0))
+    if $target = eventProps.$element
+      delete eventProps.$element
     else
-      logMessage = "Emitting %o (%o) on %o"
-      logArgs = [eventName, eventProps, $target.get(0)]
-    up.puts logMessage, logArgs...
+      $target = $(document)
+    logEmission(eventName, eventProps)
     $target.trigger(event)
     event
+
+  logEmission = (eventName, eventProps) ->
+    if eventProps.hasOwnProperty('message')
+      niceMessage = eventProps.message
+      delete eventProps.message
+      if u.isArray(niceMessage)
+        [niceMessage, niceMessageArgs...] = niceMessage
+      else
+        niceMessageArgs = []
+      if niceMessage
+        if u.isPresent(eventProps)
+          up.puts "#{niceMessage} (%s (%o))", niceMessageArgs..., eventName, eventProps
+        else
+          up.puts "#{niceMessage} (%s)", niceMessageArgs..., eventName
+    else
+      if u.isPresent(eventProps)
+        up.puts 'Emitted event %s (%o)', eventName, eventProps
+      else
+        up.puts 'Emitted event %s', eventName
 
   ###*
   [Emits an event](/up.emit) and returns whether any listener
@@ -274,7 +282,7 @@ up.bus = (($) ->
   nobodyPrevents = (args...) ->
     event = emit(args...)
     if event.isDefaultPrevented()
-      up.puts "An observer prevented the event %o", args[0]
+      up.puts "An observer prevented the event %s", args[0]
       false
     else
       true

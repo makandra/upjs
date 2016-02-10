@@ -106,7 +106,7 @@ up.history = (($) ->
   @experimental
   ###
   push = (url, options) ->
-    up.puts("Current location is now %o", url)
+    up.puts("Current location is now %s", url)
     manipulate('push', url, options)
 
   manipulate = (method, url, options) ->
@@ -124,25 +124,25 @@ up.history = (($) ->
     fromUp: true
 
   restoreStateOnPop = (state) ->
-    url = currentUrl()
-    up.log.group "Restoring state %o (now on #{url})", state, ->
-      popSelector = config.popTargets.join(', ')
-      up.replace popSelector, url,
-        history: false,
-        reveal: false,
-        transition: 'none',
-        saveScroll: false # since the URL was already changed by the browser, don't save scroll state
-        restoreScroll: config.restoreScroll
+    if state?.fromUp
+      url = currentUrl()
+      up.log.group "Restoring URL %s", url, ->
+        popSelector = config.popTargets.join(', ')
+        up.replace popSelector, url,
+          history: false,
+          reveal: false,
+          transition: 'none',
+          saveScroll: false # since the URL was already changed by the browser, don't save scroll state
+          restoreScroll: config.restoreScroll
+    else
+      up.puts 'Ignoring a state not pushed by Up.js (%o)', state
 
   pop = (event) ->
-    up.log.group "History state popped to URL %o", currentUrl(), ->
+    up.log.group "History state popped to URL %s", currentUrl(), ->
       observeNewUrl(currentUrl())
       up.layout.saveScroll(url: previousUrl)
       state = event.originalEvent.state
-      if state?.fromUp
-        restoreStateOnPop(state)
-      else
-        up.puts 'Ignoring state that was not pushed by Up.js: %o', state
+      restoreStateOnPop(state)
 
   # up.on 'framework:ready', ->
   if up.browser.canPushState()

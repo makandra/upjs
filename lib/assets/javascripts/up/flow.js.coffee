@@ -49,7 +49,7 @@ up.flow = (($) ->
           originSelector = u.selectorForElement(origin)
           selector = selector.replace(/\&/, originSelector)
         else
-          u.error("Found origin reference %o in selector %o, but options.origin is missing", '&', selector)
+          u.error("Found origin reference (%s) in selector %s, but options.origin is missing", '&', selector)
     else
       selector = u.selectorForElement(selectorOrElement)
     selector
@@ -177,7 +177,7 @@ up.flow = (($) ->
   @stable
   ###
   replace = (selectorOrElement, url, options) ->
-    up.puts "Replacing %o with %o (%o)", selectorOrElement, url, options
+    up.puts "Replacing %s from %s (%o)", selectorOrElement, url, options
     options = u.options(options)
     target = resolveSelector(selectorOrElement, options.origin)
     failTarget = u.option(options.failTarget, 'body')
@@ -323,7 +323,7 @@ up.flow = (($) ->
 
   oldFragmentNotFound = (selector, options) ->
     if options.requireMatch
-      message = 'Could not find selector %o in current body HTML'
+      message = 'Could not find selector %s in current body HTML'
       if message[0] == '#'
         message += ' (avoid using IDs)'
       u.error(message, selector)
@@ -341,7 +341,7 @@ up.flow = (($) ->
       if child = $.find(selector, htmlElement)[0]
         $(child)
       else if options.requireMatch
-        u.error("Could not find selector %o in response %o", selector, html)
+        u.error("Could not find selector %s in response %o", selector, html)
 
   elementsInserted = ($new, options) ->
     if options.history
@@ -398,7 +398,7 @@ up.flow = (($) ->
         $new.insertBefore($old)
         elementsInserted($new, options)
         if $old.is('body') && transition != 'none'
-          u.error('Cannot apply transitions to body-elements (%o)', transition)
+          u.error('Cannot apply transitions to body-elements')
         # Morphing will also process options.reveal
         up.morph($old, $new, transition, options)
 
@@ -414,7 +414,7 @@ up.flow = (($) ->
     for selectorAtom, i in disjunction
       # Splitting the atom
       selectorParts = selectorAtom.match(/^(.+?)(?:\:(before|after))?$/)
-      selectorParts or u.error('Could not parse selector atom %o', selectorAtom)
+      selectorParts or u.error('Could not parse selector atom "%s"', selectorAtom)
       selector = selectorParts[1]
       if selector == 'html'
         # If someone really asked us to replace the <html> root, the best
@@ -499,8 +499,9 @@ up.flow = (($) ->
   destroy = (selectorOrElement, options) ->
     $element = $(selectorOrElement)
     unless $element.is('.up-placeholder, .up-tooltip, .up-modal, .up-popup')
-      emitMessage = 'Destroyed fragment'
-    if up.bus.nobodyPrevents('up:fragment:destroy', $element: $element, message: emitMessage)
+      destroyMessage = ['Destroying fragment %o', $element.get(0)]
+      destroyedMessage = ['Destroyed fragment %o', $element.get(0)]
+    if up.bus.nobodyPrevents('up:fragment:destroy', $element: $element, message: destroyMessage)
       options = u.options(options, animation: false)
       animateOptions = up.motion.animateOptions(options)
       $element.addClass('up-destroying')
@@ -514,7 +515,7 @@ up.flow = (($) ->
       animationDeferred.then ->
         # Emit this while $element is still part of the DOM, so event
         # listeners bound to the document will receive the event.
-        up.emit 'up:fragment:destroyed', $element: $element, message: emitMessage
+        up.emit 'up:fragment:destroyed', $element: $element, message: destroyedMessage
         $element.remove()
       animationDeferred
     else

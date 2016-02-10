@@ -163,7 +163,7 @@ up.util = (($) ->
     $element = $(element)
     selector = undefined
 
-    up.puts("Creating selector from element %o", $element.get(0))
+    # up.puts("Creating selector from element %o", $element.get(0))
 
     if upId = presence($element.attr("up-id"))
       selector = "[up-id='#{upId}']"
@@ -1347,14 +1347,14 @@ up.util = (($) ->
       storeKey = normalizeStoreKey(key)
       if entry = store[storeKey]
         if isFresh(entry)
-          log("Cache hit for %o", key) unless options.silent
+          log("Cache hit for '%s'", key) unless options.silent
           entry.value
         else
-          log("Discarding stale cache entry for %o", key) unless options.silent
+          log("Discarding stale cache entry for '%s'", key) unless options.silent
           remove(key)
           undefined
       else
-        log("Cache miss for %o", key) unless options.silent
+        log("Cache miss for '%s'", key) unless options.silent
         undefined
 
     alias: alias
@@ -1463,7 +1463,16 @@ up.util = (($) ->
     query
 
   ###*
-  DOCUMENT ME
+  Throws a fatal error with the given message.
+
+  - The error will be printed to the [error console](https://developer.mozilla.org/en-US/docs/Web/API/Console/error)
+  - An [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) (exception) will be thrown, unwinding the current call stack
+  - The error message will be printed in a corner of the screen
+
+  \#\#\#\# Examples
+
+      up.error('Division by zero')
+      up.error('Unexpected result %o', result)
 
   @experimental
   ###

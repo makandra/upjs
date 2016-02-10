@@ -268,7 +268,7 @@ up.proxy = (($) ->
     # we use it unless `options.cache` is explicitly set to `false`.
     # The promise might still be pending.
     else if (promise = get(request)) && !ignoreCache
-      up.puts 'Re-using cached response for %o', "#{request.method} #{request.url}"
+      up.puts 'Re-using cached response for %s %s', request.method, request.url
       pending = (promise.state() == 'pending')
     # If no existing promise is available, we make a network request.
     else
@@ -380,7 +380,7 @@ up.proxy = (($) ->
       queue(request)
 
   queue = (request) ->
-    up.puts('Queuing request for %o', "#{request.method} #{request.url}")
+    up.puts('Queuing request for %s %s', request.method, request.url)
     deferred = $.Deferred()
     entry =
       deferred: deferred
@@ -389,7 +389,7 @@ up.proxy = (($) ->
     deferred.promise()
 
   load = (request) ->
-    up.emit('up:proxy:load', u.merge(request, message: ['Loading %o', "#{request.method} #{request.url}"]))
+    up.emit('up:proxy:load', u.merge(request, message: ['Loading %s %s', request.method, request.url]))
 
     # We will modify the request below for features like method wrapping.
     # Let's not change the original request which would confuse API clients
@@ -412,7 +412,7 @@ up.proxy = (($) ->
     promise
 
   responseReceived = (request, xhr) ->
-    up.emit('up:proxy:received', u.merge(request, message: ['Server responded with %o (%o bytes)', "#{xhr.status} #{xhr.statusText}", xhr.responseText?.length]))
+    up.emit('up:proxy:received', u.merge(request, message: ['Server responded with %s %s (%d bytes)', xhr.status, xhr.statusText, xhr.responseText?.length]))
     pokeQueue()
 
   pokeQueue = ->
@@ -474,11 +474,11 @@ up.proxy = (($) ->
 
     method = up.link.followMethod($link, options)
     if isIdempotent(method: method)
-      up.log.group "Preloading %o", $link, ->
+      up.log.group "Preloading link %o", $link, ->
         options.preload = true
         up.follow($link, options)
     else
-      up.puts("Won't preload %o due to unsafe method %o", $link, method)
+      up.puts("Won't preload %o due to unsafe method %s", $link, method)
       u.resolvedPromise()
 
   ###*
