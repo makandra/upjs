@@ -397,7 +397,8 @@ up.flow = (($) ->
       promise
 
     else
-      options.kept = keepElements($old, $new, options)
+      keepElements($old, $new, options)
+
       if $old.is('.up-kept')
         updateHistory(options)
         promise = u.resolvedPromise()
@@ -420,19 +421,23 @@ up.flow = (($) ->
 
 
   ###*
-  Copies `[up-keep]` elements from `$old` into `$new`.
+  Copies `[up-keep]` elements from `$old` into `$new` so the
+  new fragment doesn't show discarded elements during a transition.
+
+  Also marks kept element with an `up-kept` class so we know
+  not to compile it again.
 
   @function keepElements
   ###
   keepElements = ($old, $new, options) ->
-    kept = []
-    if options.keep
+    options.kept = []
+    if u.isPresent(options.keep)
       for keepable in u.findWithSelf($old, '[up-keep]')
         $keepable = $(keepable)
         sisterSelector = $keepable.attr('up-keep') || '&'
         sisterSelector = resolveSelector(sisterSelector, $keepable)
-        $sister = $new.find(sisterSelector).first()
-        console.debug("Keepable is %o, sister is %o", $keepable.get(0), $sister.get(0))
+        $sister = u.findWithSelf($new, sisterSelector).first()
+        console.debug("Keepable is %o, sister is %o (lookup through %o, $new was %o)", $keepable.get(0), $sister.get(0), sisterSelector, $new)
         keepEventArgs =
           $element: $keepable
           $newElement: $sister
@@ -444,14 +449,19 @@ up.flow = (($) ->
           $sister.replaceWith($keepableClone)
           $keepable.addClass('up-kept')
           $keepable.attr('up-data', $sister.attr('up-data'))
-          kept.push($keepable)
-    kept
+          options.kept.push($keepable)
+        else
+          $keepable.removeClass('up-kept')
 
   parseImplantSteps = (selector, options) ->
-    transitionString = options.transition || options.animation || 'none'
+    transitionArg = options.transition || options.animation || 'none'
     comma = /\ *,\ */
     disjunction = selector.split(comma)
-    transitions = transitionString.split(comma) if u.isPresent(transitionString)    
+    # console.debug("string is %o", transitionArg)
+    if u.isString(transitions)
+      transitions = transitionArg.split(comma)
+    else
+      transitions = [transitionArg]
     for selectorAtom, i in disjunction
       # Splitting the atom
       selectorParts = selectorAtom.match(/^(.+?)(?:\:(before|after))?$/)

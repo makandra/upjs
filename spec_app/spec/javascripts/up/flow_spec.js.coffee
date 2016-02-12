@@ -459,6 +459,13 @@ describe 'up.flow', ->
 
       describe 'handling of [up-keep] elements', ->
 
+        squish = (string) ->
+          if u.isString(string)
+            string = string.replace(/^\s+/g, '')
+            string = string.replace(/\s+$/g, '')
+            string = string.replace(/\s+/g, ' ')
+          string
+
         beforeEach ->
 # Need to refactor this spec file so examples don't all share one example
           $('.before, .middle, .after').remove()
@@ -483,17 +490,17 @@ describe 'up.flow', ->
           $container = affix('.container')
           $container.html """
             old-before
-            <div class='element'>old-inside</div>
+            <div class='element' up-keep>old-inside</div>
             old-after
             """
           up.extract '.container', """
             <div class='container'>
               new-before
-              <div class='element'>new-inside</div>
+              <div class='element' up-keep>new-inside</div>
               new-after
             </div>
             """
-          expect($('.container').text()).toEqual('new-before old-inside new-after')
+          expect(squish($('.container').text())).toEqual('new-before old-inside new-after')
 
         it "keeps an [up-keep] element if that element itself is a direct replacement target", ->
           affix('.keeper[up-keep]').text('old-inside')
@@ -575,7 +582,9 @@ describe 'up.flow', ->
           expect(compiler.calls.count()).toEqual(1)
 
           up.extract '.container', """
-            <div class="keeper" up-keep></div>
+            <div class='container'>
+              <div class="keeper" up-keep></div>
+            </div>
             """
           expect(compiler.calls.count()).toEqual(1)
           expect('.keeper').toExist()
@@ -619,6 +628,30 @@ describe 'up.flow', ->
             [ { key: 'value1' } ],
             [ { key: 'value2' } ]
           ]
+
+        it "doesn't let the discarded element appear in a transition", (done) ->
+          oldTextDuringTransition = undefined
+          newTextDuringTransition = undefined
+          transition = ($old, $new) ->
+            oldTextDuringTransition = squish($old.text())
+            newTextDuringTransition = squish($new.text())
+            u.resolvedDeferred()
+          $container = affix('.container')
+          $container.html """
+            <div class='foo'>old-foo</div>
+            <div class='bar' up-keep>old-bar</div>
+            """
+          newHtml = """
+            <div class='container'>
+              <div class='foo'>new-foo</div>
+              <div class='bar' up-keep>new-bar</div>
+            </div>
+            """
+          promise = up.extract('.container', newHtml, transition: transition)
+          promise.then ->
+            expect(oldTextDuringTransition).toEqual('old-foo old-bar')
+            expect(newTextDuringTransition).toEqual('new-foo old-bar')
+            done()
 
     describe 'up.destroy', ->
       
