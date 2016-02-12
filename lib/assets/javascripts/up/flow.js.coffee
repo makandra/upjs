@@ -347,10 +347,12 @@ up.flow = (($) ->
       else if options.requireMatch
         u.error("Could not find selector %s in response %o", selector, html)
 
-  elementsInserted = ($new, options) ->
+  updateHistory = (options) ->
     if options.history
       document.title = options.title if options.title
       up.history[options.historyMethod](options.history)
+
+  postprocessNewElement = ($new, options) ->
     # Remember where the element came from so we can
     # offer reload functionality.
     unless options.source is false
@@ -382,7 +384,7 @@ up.flow = (($) ->
       $old[insertionMethod]($wrapper)
 
       u.copyAttributes($new, $old)
-      elementsInserted($wrapper.children(), options)
+      postprocessNewElement($wrapper.children(), options)
 
       # Reveal element that was being prepended/appended.
       promise = up.layout.revealOrRestoreScroll($wrapper, options)
@@ -397,23 +399,31 @@ up.flow = (($) ->
     else
       options.kept = keepElements($old, $new, options)
       if $old.is('.up-kept')
-        throw "das ist komisch :( manches zeug brauchen wir, manches nicht"
-        elementsInserted($old)
+        updateHistory(options)
+        promise = u.resolvedPromise()
       else
         replacement = ->
           # Don't insert the new element after the old element.
           # For some reason this will make the browser scroll to the
           # bottom of the new element.
           $new.insertBefore($old)
-          elementsInserted($new, options)
+          updateHistory(options)
+          postprocessNewElement($new, options)
           if $old.is('body') && transition != 'none'
             u.error('Cannot apply transitions to body-elements')
           # Morphing will also process options.reveal
           up.morph($old, $new, transition, options)
         # Wrap the replacement as a destroy animation, so $old will
         # get marked as .up-destroying right away.
-        destroy $old, animation: replacement
+        promise = destroy $old, animation: replacement
+      promise
 
+
+  ###*
+  Copies `[up-keep]` elements from `$old` into `$new`.
+
+  @function keepElements
+  ###
   keepElements = ($old, $new, options) ->
     kept = []
     if options.keep
@@ -427,8 +437,11 @@ up.flow = (($) ->
           $element: $keepable
           $newElement: $sister
           message: ['Keeping element %o', $keepable.get(0)]
-        if $sister.length && $sister.is('[up-keep]') && up.nobodyPrevents('up:fragment:keep', keepEventArgs)
-          # $sister.replaceWith($keepable)
+        if $sister.length && $sister.is('[up-keep]') && up.bus.nobodyPrevents('up:fragment:keep', keepEventArgs)
+          # Insert a clone of the kept element into the new fragment,
+          # so it looks right in a transition.
+          $keepableClone = $keepable.clone()
+          $sister.replaceWith($keepableClone)
           $keepable.addClass('up-kept')
           $keepable.attr('up-data', $sister.attr('up-data'))
           kept.push($keepable)
