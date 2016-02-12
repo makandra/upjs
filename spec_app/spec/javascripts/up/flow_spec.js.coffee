@@ -608,6 +608,18 @@ describe 'up.flow', ->
           expect($('.keeper')).toHaveText('old-inside')
           expect(newData).toEqual({})
 
+        it 'reuses the same element and emits up:fragment:kept during multiple extractions', ->
+          listener = jasmine.createSpy()
+          $keeper = affix('.keeper[up-keep]').text('old-inside')
+          $keeper.on 'up:fragment:kept', (event) -> listener(event.newData)
+          up.extract '.keeper', "<div class='keeper' up-keep up-data='{ \"key\": \"value1\" }'>new-inside</div>"
+          up.extract '.keeper', "<div class='keeper' up-keep up-data='{ \"key\": \"value2\" }'>new-inside</div>"
+          expect($('.keeper')).toHaveText('old-inside')
+          expect(listener.calls.allArgs()).toEqual [
+            [ { key: 'value1' } ],
+            [ { key: 'value2' } ]
+          ]
+
     describe 'up.destroy', ->
       
       it 'removes the element with the given selector', ->

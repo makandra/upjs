@@ -396,32 +396,39 @@ up.flow = (($) ->
 
     else
       options.kept = keepElements($old, $new, options)
-      replacement = ->
-        # Don't insert the new element after the old element.
-        # For some reason this will make the browser scroll to the
-        # bottom of the new element.
-        $new.insertBefore($old)
-        elementsInserted($new, options)
-        if $old.is('body') && transition != 'none'
-          u.error('Cannot apply transitions to body-elements')
-        # Morphing will also process options.reveal
-        up.morph($old, $new, transition, options)
-
-      # Wrap the replacement as a destroy animation, so $old will
-      # get marked as .up-destroying right away.
-      destroy $old, animation: replacement
+      if $old.is('.up-kept')
+        throw "das ist komisch :( manches zeug brauchen wir, manches nicht"
+        elementsInserted($old)
+      else
+        replacement = ->
+          # Don't insert the new element after the old element.
+          # For some reason this will make the browser scroll to the
+          # bottom of the new element.
+          $new.insertBefore($old)
+          elementsInserted($new, options)
+          if $old.is('body') && transition != 'none'
+            u.error('Cannot apply transitions to body-elements')
+          # Morphing will also process options.reveal
+          up.morph($old, $new, transition, options)
+        # Wrap the replacement as a destroy animation, so $old will
+        # get marked as .up-destroying right away.
+        destroy $old, animation: replacement
 
   keepElements = ($old, $new, options) ->
     kept = []
     if options.keep
-      for keepable in $old.find('[up-keep]')
+      for keepable in u.findWithSelf($old, '[up-keep]')
         $keepable = $(keepable)
         sisterSelector = $keepable.attr('up-keep') || '&'
-        console.debug("Keepable is %o", $keepable)
         sisterSelector = resolveSelector(sisterSelector, $keepable)
-        $sister = $new.find($sister).first()
-        if $sister.length && up.nobodyPrevents('up:fragment:keep', $element: $keepable, $newElement: $sister)
-          $sister.replaceWith($keepable)
+        $sister = $new.find(sisterSelector).first()
+        console.debug("Keepable is %o, sister is %o", $keepable.get(0), $sister.get(0))
+        keepEventArgs =
+          $element: $keepable
+          $newElement: $sister
+          message: ['Keeping element %o', $keepable.get(0)]
+        if $sister.length && $sister.is('[up-keep]') && up.nobodyPrevents('up:fragment:keep', keepEventArgs)
+          # $sister.replaceWith($keepable)
           $keepable.addClass('up-kept')
           $keepable.attr('up-data', $sister.attr('up-data'))
           kept.push($keepable)
