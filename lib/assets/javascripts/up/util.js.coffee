@@ -163,7 +163,7 @@ up.util = (($) ->
     $element = $(element)
     selector = undefined
 
-    # up.puts("Creating selector from element %o", $element.get(0))
+    up.puts("Creating selector from element %o", $element.get(0))
 
     if upId = presence($element.attr("up-id"))
       selector = "[up-id='#{upId}']"

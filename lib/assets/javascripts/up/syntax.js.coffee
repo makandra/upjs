@@ -213,7 +213,8 @@ up.syntax = (($) ->
       $jqueryElement.addClass(DESTROYABLE_CLASS)
       $jqueryElement.data(DESTROYER_KEY, destroyer)
 
-  compile = ($fragment) ->
+  compile = ($fragment, options) ->
+    options = u.options(options)
     $kept = $(options.kept)
     up.log.group "Compiling fragment %o", $fragment.get(0), ->
       for compiler in compilers
@@ -337,7 +338,7 @@ up.syntax = (($) ->
   ###
 
   up.on 'ready', (-> hello(document.body))
-  up.on 'up:fragment:inserted', (event, $element) -> compile($element)
+  up.on 'up:fragment:inserted', (event, $element) -> compile($element, event)
   up.on 'up:fragment:destroy', (event, $element) -> runDestroyers($element)
   up.on 'up:framework:boot', snapshot
   up.on 'up:framework:reset', reset

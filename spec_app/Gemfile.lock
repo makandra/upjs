@@ -1,11 +1,7 @@
 PATH
   remote: ..
   specs:
-<<<<<<< HEAD
-    upjs-rails (0.18.0)
-=======
-    upjs-rails (0.17.0)
->>>>>>> cadafb2... wip
+    upjs-rails (0.18.1)
       rails (>= 3)
 
 GEM

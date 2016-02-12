@@ -417,7 +417,8 @@ up.flow = (($) ->
       for keepable in $old.find('[up-keep]')
         $keepable = $(keepable)
         sisterSelector = $keepable.attr('up-keep') || '&'
-        sisterSelector = resolveSelector(sisterSelector, u.only(options.origin))
+        console.debug("Keepable is %o", $keepable)
+        sisterSelector = resolveSelector(sisterSelector, $keepable)
         $sister = $new.find($sister).first()
         if $sister.length && up.nobodyPrevents('up:fragment:keep', $element: $keepable, $newElement: $sister)
           $sister.replaceWith($keepable)
