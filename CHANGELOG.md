@@ -12,6 +12,7 @@ Unreleased
 
 - `up.proxy.ajax` is now available as [`up.ajax`](/up.ajax).
 - `up.ajax` can now handle nested objects as `{ data }` option (used to pass form parameters).
+- TODO: Document [up-keep], up:fragment:keep, up:fragment:kept
 
 
 ### Breaking changes

@@ -307,11 +307,14 @@ up.flow = (($) ->
       options.beforeSwap?()
       deferreds = []
 
+      updateHistory(options)
+
       for step in parseImplantSteps(selector, options)
         up.log.group 'Updating %s', step.selector, ->
           $old = findOldFragment(step.selector, options)
           $new = response.find(step.selector)?.first()
           if $old && $new
+            throw "Auch wenn ich zeug nach $new kopiert habe, swappe ich hier doch ganze bereiche :("
             deferred = swapElements($old, $new, step.pseudoClass, step.transition, options)
             deferreds.push(deferred)
 
@@ -399,8 +402,7 @@ up.flow = (($) ->
     else
       keepElements($old, $new, options)
 
-      if $old.is('.up-kept')
-        updateHistory(options)
+      if options.kept.is($old)
         promise = u.resolvedPromise()
       else
         replacement = ->
@@ -421,11 +423,7 @@ up.flow = (($) ->
 
 
   ###*
-  Copies `[up-keep]` elements from `$old` into `$new` so the
-  new fragment doesn't show discarded elements during a transition.
-
-  Also marks kept element with an `up-kept` class so we know
-  not to compile it again.
+  DOCUMENT ME
 
   @function keepElements
   ###
@@ -447,11 +445,9 @@ up.flow = (($) ->
           # so it looks right in a transition.
           $keepableClone = $keepable.clone()
           $sister.replaceWith($keepableClone)
-          $keepable.addClass('up-kept')
           $keepable.attr('up-data', $sister.attr('up-data'))
           options.kept.push($keepable)
-        else
-          $keepable.removeClass('up-kept')
+    options.kept = $(options.kept)
 
   parseImplantSteps = (selector, options) ->
     transitionArg = options.transition || options.animation || 'none'

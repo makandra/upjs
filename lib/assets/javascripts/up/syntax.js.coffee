@@ -213,18 +213,38 @@ up.syntax = (($) ->
       $jqueryElement.addClass(DESTROYABLE_CLASS)
       $jqueryElement.data(DESTROYER_KEY, destroyer)
 
+  emitFragmentInserted = ($fragment, options) ->
+    eventAttrs = u.options options,
+      $element: $fragment
+      message: ['Inserted fragment %o', $fragment.get(0)]
+    up.emit('up:fragment:inserted', eventAttrs)
+
+  emitFragmentKept = ($fragment, options) ->
+    eventAttrs = u.options options,
+      $element: $fragment
+      message: ['Kept fragment %o', $fragment.get(0)]
+    up.emit('up:fragment:kept', eventAttrs)
+
   compile = ($fragment, options) ->
     options = u.options(options)
-    $kept = $(options.kept)
+    $keptElements = $(options.kept)
     up.log.group "Compiling fragment %o", $fragment.get(0), ->
       for compiler in compilers
-        $matches = u.findWithSelf($fragment, compiler.selector)
+        $matches = u.findWithSelf($fragment, compiler.selector).filter ->
+          $(this).closest($keptElements).length == 0
+
+        console.debug("Comparing matches %o with keptElements %o", $matches.get(), $keptElements.get())
+
         if $matches.length
           up.log.group ("Compiling '%s' on %d element(s)" unless compiler.isDefault), compiler.selector, $matches.length, ->
             if compiler.batch
               applyCompiler(compiler, $matches, $matches.get())
             else
               $matches.each -> applyCompiler(compiler, $(this), this)
+    unless $keptElements.is($fragment)
+      emitFragmentInserted($fragment, options)
+    for keptElement in $keptElements
+      emitFragmentKept($(keptElement), options)
 
   runDestroyers = ($fragment) ->
     u.findWithSelf($fragment, ".#{DESTROYABLE_CLASS}").each ->
@@ -314,12 +334,7 @@ up.syntax = (($) ->
   @stable
   ###
   hello = (selectorOrElement, options) ->
-    $element = $(selectorOrElement)
-    eventAttrs = u.options options,
-      $element: $element
-      message: ['Inserted fragment %o', $element.get(0)]
-    up.emit('up:fragment:inserted', eventAttrs)
-    $element
+    compile($(selectorOrElement), options)
 
   ###*
   When a page fragment has been [inserted or updated](/up.replace),
@@ -338,7 +353,6 @@ up.syntax = (($) ->
   ###
 
   up.on 'ready', (-> hello(document.body))
-  up.on 'up:fragment:inserted', (event, $element) -> compile($element, event)
   up.on 'up:fragment:destroy', (event, $element) -> runDestroyers($element)
   up.on 'up:framework:boot', snapshot
   up.on 'up:framework:reset', reset

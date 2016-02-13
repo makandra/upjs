@@ -502,12 +502,22 @@ describe 'up.flow', ->
             """
           expect(squish($('.container').text())).toEqual('new-before old-inside new-after')
 
-        it "keeps an [up-keep] element if that element itself is a direct replacement target", ->
-          affix('.keeper[up-keep]').text('old-inside')
-          up.extract '.keeper', """
-            <div class='keeper' up-keep>new-inside</div>
-          """
-          expect($('.keeper')).toHaveText('old-inside')
+        describe 'if an [up-keep] element is itself a direct replacement target', ->
+
+          it "keeps that element", ->
+            affix('.keeper[up-keep]').text('old-inside')
+            up.extract '.keeper', "<div class='keeper' up-keep>new-inside</div>"
+            expect($('.keeper')).toHaveText('old-inside')
+
+          it "only emits an event up:fragment:inserted, but not an event up:fragment:kept", ->
+            insertedListener = jasmine.createSpy()
+            up.on('up:fragment:inserted', insertedListener)
+            keptListener = jasmine.createSpy()
+            up.on('up:fragment:kept', keptListener)
+            affix('.keeper[up-keep]')
+            up.extract '.keeper', "<div class='keeper' up-keep></div>"
+            expect(insertedListener).not.toHaveBeenCalled()
+            expect(keptListener).toHaveBeenCalled()
 
         it "removes an [up-keep] element if no matching element is found in the response", ->
           $container = affix('.container')
