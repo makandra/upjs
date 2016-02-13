@@ -509,7 +509,7 @@ describe 'up.flow', ->
             up.extract '.keeper', "<div class='keeper' up-keep>new-inside</div>"
             expect($('.keeper')).toHaveText('old-inside')
 
-          it "only emits an event up:fragment:inserted, but not an event up:fragment:kept", ->
+          it "only emits an event up:fragment:kept, but not an event up:fragment:inserted", ->
             insertedListener = jasmine.createSpy()
             up.on('up:fragment:inserted', insertedListener)
             keptListener = jasmine.createSpy()

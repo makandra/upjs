@@ -213,40 +213,49 @@ up.syntax = (($) ->
       $jqueryElement.addClass(DESTROYABLE_CLASS)
       $jqueryElement.data(DESTROYER_KEY, destroyer)
 
-  emitFragmentInserted = ($fragment, options) ->
-    eventAttrs = u.options options,
-      $element: $fragment
-      message: ['Inserted fragment %o', $fragment.get(0)]
-    up.emit('up:fragment:inserted', eventAttrs)
+  ###*
+  Applies all compilers on the given element and its descendants.
+  Unlike [`up.hello`](/up.hello), this doesn't emit any events.
 
-  emitFragmentKept = ($fragment, options) ->
-    eventAttrs = u.options options,
-      $element: $fragment
-      message: ['Kept fragment %o', $fragment.get(0)]
-    up.emit('up:fragment:kept', eventAttrs)
-
+  @function up.syntax.compile
+  @internal
+  ###
   compile = ($fragment, options) ->
     options = u.options(options)
     $keptElements = $(options.kept)
-    up.log.group "Compiling fragment %o", $fragment.get(0), ->
-      for compiler in compilers
-        $matches = u.findWithSelf($fragment, compiler.selector).filter ->
-          $(this).closest($keptElements).length == 0
-
-        console.debug("Comparing matches %o with keptElements %o", $matches.get(), $keptElements.get())
-
-        if $matches.length
-          up.log.group ("Compiling '%s' on %d element(s)" unless compiler.isDefault), compiler.selector, $matches.length, ->
-            if compiler.batch
-              applyCompiler(compiler, $matches, $matches.get())
-            else
-              $matches.each -> applyCompiler(compiler, $(this), this)
     unless $keptElements.is($fragment)
-      emitFragmentInserted($fragment, options)
-    for keptElement in $keptElements
-      emitFragmentKept($(keptElement), options)
+      up.log.group "Compiling fragment %o", $fragment.get(0), ->
+        for compiler in compilers
 
-  runDestroyers = ($fragment) ->
+          console.debug("Compiler %o", compiler.selector)
+
+          # console.debug("Before filter is %o", u.findWithSelf($fragment, compiler.selector).get())
+          console.debug("Got %o kept elements (%o)", $keptElements.length, $keptElements.get())
+
+          $matches = u.findWithSelf($fragment, compiler.selector)
+
+          console.debug("Got %o matches before filter (%o)", $matches.length, $matches.get())
+
+          $matches = $matches.filter -> $(this).closest($keptElements).length == 0
+
+          console.debug("Got %o matches after filter (%o)", $matches.length, $matches.get())
+
+          if $matches.length
+            up.log.group ("Compiling '%s' on %d element(s)" unless compiler.isDefault), compiler.selector, $matches.length, ->
+              if compiler.batch
+                applyCompiler(compiler, $matches, $matches.get())
+              else
+                $matches.each -> applyCompiler(compiler, $(this), this)
+
+  ###*
+  Runs any destroyers on the given fragment and its descendants.
+  Unlike [`up.destroy`](/up.destroy), this doesn't emit any events
+  and does not remove the element from the DOM.
+
+  @function up.syntax.clean
+  @internal
+  ###
+  clean = ($fragment) ->
     u.findWithSelf($fragment, ".#{DESTROYABLE_CLASS}").each ->
       $element = $(this)
       destroyer = $element.data(DESTROYER_KEY)
@@ -308,63 +317,17 @@ up.syntax = (($) ->
   reset = ->
     compilers = u.select compilers, (compiler) -> compiler.isDefault
 
-  ###*
-  Compiles a page fragment that has been inserted into the DOM
-  without Up.js.
-
-  **As long as you manipulate the DOM using Up.js, you will never
-  need to call this method.** You only need to use `up.hello` if the
-  DOM is manipulated without Up.js' involvement, e.g. by setting
-  the `innerHTML` property or calling jQuery methods like
-  `html`, `insertAfter` or `appendTo`:
-
-      $element = $('.element');
-      $element.html('<div>...</div>');
-      up.hello($element);
-
-  This function emits the [`up:fragment:inserted`](/up:fragment:inserted)
-  event.
-
-  @function up.hello
-  @param {String|Element|jQuery} selectorOrElement
-  @param {String|Element|jQuery} [options.origin]
-  @param {String|Element|jQuery} [options.kept]
-  @return {jQuery}
-    The compiled element
-  @stable
-  ###
-  hello = (selectorOrElement, options) ->
-    compile($(selectorOrElement), options)
-
-  ###*
-  When a page fragment has been [inserted or updated](/up.replace),
-  this event is [emitted](/up.emit) on the fragment.
-
-  \#\#\#\# Example
-
-      up.on('up:fragment:inserted', function(event, $fragment) {
-        console.log("Looks like we have a new %o!", $fragment);
-      });
-
-  @event up:fragment:inserted
-  @param {jQuery} event.$element
-    The fragment that has been inserted or updated.
-  @stable
-  ###
-
-  up.on 'ready', (-> hello(document.body))
-  up.on 'up:fragment:destroy', (event, $element) -> runDestroyers($element)
   up.on 'up:framework:boot', snapshot
   up.on 'up:framework:reset', reset
 
   compiler: compiler
-  hello: hello
+  compile: compile
+  clean: clean
   data: data
 
 )(jQuery)
 
 up.compiler = up.syntax.compiler
-up.hello = up.syntax.hello
 
 up.ready = -> up.util.error('up.ready no longer exists. Please use up.hello instead.')
 up.awaken = -> up.util.error('up.awaken no longer exists. Please use up.compiler instead.')

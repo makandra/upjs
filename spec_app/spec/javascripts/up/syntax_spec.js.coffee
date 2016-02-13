@@ -50,6 +50,10 @@ describe 'up.syntax', ->
 
         expect(observeArgs).toHaveBeenCalledWith('child', {})
 
+      describe 'with { keep } option', ->
+
+        it 'adds an up-keep attribute to the fragment during compilation', ->
+          throw "implement me"
 
     describe 'up.hello', ->
 
