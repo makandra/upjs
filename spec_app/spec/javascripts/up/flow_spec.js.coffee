@@ -514,10 +514,13 @@ describe 'up.flow', ->
             up.on('up:fragment:inserted', insertedListener)
             keptListener = jasmine.createSpy()
             up.on('up:fragment:kept', keptListener)
-            affix('.keeper[up-keep]')
-            up.extract '.keeper', "<div class='keeper' up-keep></div>"
+            up.on 'up:fragment:kept', (args...) -> console.debug("Got kept event with %o", args)
+            affix('.keeper[up-keep]').text('old-inside')
+            up.extract '.keeper', "<div class='keeper' up-keep>new-inside</div>"
+            console.debug('-- Checking assertions --')
             expect(insertedListener).not.toHaveBeenCalled()
-            expect(keptListener).toHaveBeenCalled()
+            # up.emit('up:fragment:kept')
+            expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $('.keep'), jasmine.anything())
 
         it "removes an [up-keep] element if no matching element is found in the response", ->
           $container = affix('.container')
@@ -607,37 +610,67 @@ describe 'up.flow', ->
           """
           expect($('.keeper')).toHaveText('new-inside')
 
+        it 'emits an up:fragment:kept event on a kept element and up:fragment:inserted on an updated parent', ->
+          insertedListener = jasmine.createSpy()
+          up.on('up:fragment:inserted', insertedListener)
+          keptListener = jasmine.createSpy()
+          up.on('up:fragment:kept', keptListener)
+
+          $container = affix('.container')
+          $container.html """
+            <div class="keeper" up-keep></div>
+            """
+          up.extract '.container', """
+            <div class='container'>
+              <div class="keeper" up-keep></div>
+            </div>
+            """
+          expect(insertedListener).toHaveBeenCalledWith(jasmine.anything(), $('.container'), jasmine.anything())
+          expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $('.container .keeper'), jasmine.anything())
+
         it 'emits an up:fragment:kept event on a kept element with a newData property corresponding to the up-data attribute value of the discarded element', ->
-          newData = undefined
-          $keeper = affix('.keeper[up-keep]').text('old-inside')
-          $keeper.on 'up:fragment:kept', (event) -> newData = event.newData
-          up.extract '.keeper', """
-            <div class='keeper' up-keep up-data='{ "foo": "bar" }'>new-inside</div>
+          keptListener = jasmine.createSpy()
+          up.on('up:fragment:kept', keptListener)
+          $container = affix('.container')
+          $keeper = $container.affix('.keeper[up-keep]').text('old-inside')
+          up.extract '.container', """
+            <div class='container'>
+              <div class='keeper' up-keep up-data='{ "foo": "bar" }'>new-inside</div>
+            </div>
           """
           expect($('.keeper')).toHaveText('old-inside')
-          expect(newData).toEqual({ 'foo': 'bar' })
+          expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $keeper, { 'foo': 'bar' })
 
         it 'emits an up:fragment:kept with { newData: {} } if the discarded element had no up-data value', ->
-          newData = undefined
-          $keeper = affix('.keeper[up-keep]').text('old-inside')
-          $keeper.on 'up:fragment:kept', (event) -> newData = event.newData
+          keptListener = jasmine.createSpy()
+          up.on('up:fragment:kept', keptListener)
+          $container = affix('.container')
+          $keeper = $container.affix('.keeper[up-keep]').text('old-inside')
           up.extract '.keeper', """
-            <div class='keeper' up-keep>new-inside</div>
+            <div class='container'>
+              <div class='keeper' up-keep>new-inside</div>
+            </div>
           """
           expect($('.keeper')).toHaveText('old-inside')
-          expect(newData).toEqual({})
+          expect(keptListener).toEqual(jasmine.anything(), $('.keeper'), {})
 
         it 'reuses the same element and emits up:fragment:kept during multiple extractions', ->
-          listener = jasmine.createSpy()
-          $keeper = affix('.keeper[up-keep]').text('old-inside')
-          $keeper.on 'up:fragment:kept', (event) -> listener(event.newData)
-          up.extract '.keeper', "<div class='keeper' up-keep up-data='{ \"key\": \"value1\" }'>new-inside</div>"
-          up.extract '.keeper', "<div class='keeper' up-keep up-data='{ \"key\": \"value2\" }'>new-inside</div>"
+          keptListener = jasmine.createSpy()
+          up.on('up:fragment:kept', keptListener)
+          $container = affix('.container')
+          $keeper = $container.affix('.keeper[up-keep]').text('old-inside')
+          up.extract '.keeper', """
+            <div class='container'>
+              <div class='keeper' up-keep up-data='{ \"key\": \"value1\" }'>new-inside</div>
+            </div>
+          """
+          up.extract '.keeper', """
+            <div class='container'>
+              <div class='keeper' up-keep up-data='{ \"key\": \"value2\" }'>new-inside</div>
+          """
           expect($('.keeper')).toHaveText('old-inside')
-          expect(listener.calls.allArgs()).toEqual [
-            [ { key: 'value1' } ],
-            [ { key: 'value2' } ]
-          ]
+          expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), { key: 'value1' }, jasmine.anything())
+          expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), { key: 'value2' }, jasmine.anything())
 
         it "doesn't let the discarded element appear in a transition", (done) ->
           oldTextDuringTransition = undefined
