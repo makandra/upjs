@@ -166,6 +166,9 @@ up.bus = (($) ->
     # clean up after ourselves during a `reset`
     rememberUpDescription(upDescription)
 
+    eventName = upDescription[0]
+    console.debug("registering jQuery description for %o: %o", eventName, jqueryDescription)
+
     $(document).on(jqueryDescription...)
 
     # Return destructor
@@ -246,6 +249,7 @@ up.bus = (($) ->
       delete eventProps.$element
     else
       $target = $(document)
+    console.debug("Triggering %o (%o)", eventName, event)
     logEmission(eventName, eventProps)
     $target.trigger(event)
     event

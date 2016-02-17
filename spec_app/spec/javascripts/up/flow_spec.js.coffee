@@ -514,8 +514,10 @@ describe 'up.flow', ->
             up.on('up:fragment:inserted', insertedListener)
             keptListener = jasmine.createSpy()
             up.on('up:fragment:kept', keptListener)
-            up.on 'up:fragment:kept', (args...) -> console.debug("Got kept event with %o", args)
-            affix('.keeper[up-keep]').text('old-inside')
+            up.on 'up:fragment:kept', (args...) -> console.debug("*** Got kept event with %o ***", args)
+            up.on 'up:fragment:inserted', (args...) -> console.debug("*** Got inserted event with %o ***", args)
+            $keeper = affix('.keeper[up-keep]').text('old-inside')
+            $keeper.on 'up:fragment:kept', (event) -> console.debug("Got kept event when subscribing directly")
             up.extract '.keeper', "<div class='keeper' up-keep>new-inside</div>"
             console.debug('-- Checking assertions --')
             expect(insertedListener).not.toHaveBeenCalled()

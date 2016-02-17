@@ -172,7 +172,6 @@ up.util = (($) ->
     else if name = presence($element.attr("name"))
       selector = "[name='#{name}']"
     else if classes = presence(nonUpClasses($element))
-      console.log("using klass!", classes)
       selector = ''
       for klass in classes
         selector += ".#{klass}"

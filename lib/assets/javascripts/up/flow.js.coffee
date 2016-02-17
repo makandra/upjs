@@ -376,7 +376,7 @@ up.flow = (($) ->
       $old[insertionMethod]($wrapper)
 
       u.copyAttributes($new, $old)
-      postprocessNewElement($wrapper.children(), options)
+      hello($wrapper.children(), options)
 
       # Reveal element that was being prepended/appended.
       promise = up.layout.revealOrRestoreScroll($wrapper, options)
@@ -390,11 +390,16 @@ up.flow = (($) ->
 
     else
       keepElements($old, $new, options)
+
+      throw "$old und $new hat evtl die bedeutung gewechselt in keepElements! können wir für diesen fall keepElements komplett umgehen?"
+
       if options.kept.is($old)
         console.debug("Element is kept directly")
-        # If we keep the entire element wo will not morph.
+        console.debug("Replacing old %o with new %o", $old.get(0), $new.get(0))
+        # If we keep the entire element we will not morph.
         $old.replaceWith($new)
-        hello($new, options)
+        console.debug("Emitting fragment:kept on new %o", $new.get(0))
+        emitFragmentKept($new)
         promise = u.resolvedPromise()
       else
         replacement = ->
@@ -431,6 +436,7 @@ up.flow = (($) ->
   keepElements = ($old, $new, options) ->
     options.kept = []
     if u.isPresent(options.keep)
+      throw "komisch das dass auf die presence von options.keep anspringt und dann nix damit macht"
       for keepable in u.findWithSelf($old, '[up-keep]')
         $keepable = $(keepable)
         sisterSelector = $keepable.attr('up-keep') || '&'
@@ -450,6 +456,24 @@ up.flow = (($) ->
           $sister.replaceWith($keepable) # now $sister is detached; $keepable is in $sister's former place within $new
           options.kept.push(keepable)
     options.kept = $(options.kept)
+
+  findSister = ($element, $newTree) ->
+    if $element.is('[up-keep]')
+      $keepable = $element
+      sisterSelector = $keepable.attr('up-keep') || '&'
+      sisterSelector = resolveSelector(sisterSelector, $keepable)
+      $sister = u.findWithSelf($newTree, sisterSelector).first()
+      console.debug("Keepable is %o, sister is %o (lookup through %o, $new was %o)", $keepable.get(0), $sister.get(0), sisterSelector, $new)
+      keepEventArgs =
+        $element: $keepable
+        $newElement: $sister
+        newData: up.syntax.data($sister)
+        message: ['Keeping element %o', $keepable.get(0)]
+      if $sister.length && $sister.is('[up-keep]') && up.bus.nobodyPrevents('up:fragment:keep', keepEventArgs)
+        return {
+          $sister: $sister
+          newData: $sister.attr('up-data')
+        }
 
   parseImplantSteps = (selector, options) ->
     transitionArg = options.transition || options.animation || 'none'
@@ -504,10 +528,13 @@ up.flow = (($) ->
     options = u.options(options, kept: [])
     $keptElements = $(options.kept)
     $element = $(selectorOrElement)
+    console.debug('Called hello with %o kept elements (%o)', $keptElements.length, $keptElements.get())
     unless $keptElements.is($element)
-      up.syntax.compile($element, u.only(options, 'kept'))
+      console.debug('Branch1: We are compiling')
+      up.syntax.compile($element, kept: $keptElements)
       emitFragmentInserted($element, options)
     for keptElement in $keptElements
+      console.debug('Emitting kept %o', keptElement)
       emitFragmentKept(keptElement)
     $element
 
