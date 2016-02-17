@@ -295,12 +295,13 @@ up.flow = (($) ->
     up.log.group 'Extracting %s from %d bytes of HTML', selectorOrElement, html?.length, ->
       options = u.options(options,
         historyMethod: 'push',
-        requireMatch: true
+        requireMatch: true,
+        keep: true
       )
       selector = resolveSelector(selectorOrElement, options.origin)
       response = parseResponse(html, options)
       options.title ||= response.title()
-      options.keep = u.option(options.keep, { '[up-keep]': '&' })
+      # options.keep = u.option(options.keep, { '[up-keep]': '&' })
 
       up.layout.saveScroll() unless options.saveScroll == false
 
@@ -386,47 +387,41 @@ up.flow = (($) ->
         up.animate($wrapper, transition, options)
       promise = promise.then ->
         u.unwrapElement($wrapper)
-      promise
+
+    else if keepInfo = findSister($old, $new, options)
+      console.debug("Element is kept directly")
+      emitFragmentKept(keepInfo)
+      promise = u.resolvedPromise()
 
     else
-      keepElements($old, $new, options)
+      replacement = ->
 
-      throw "$old und $new hat evtl die bedeutung gewechselt in keepElements! können wir für diesen fall keepElements komplett umgehen?"
+        throw "neues keepElement hier"
 
-      if options.kept.is($old)
-        console.debug("Element is kept directly")
-        console.debug("Replacing old %o with new %o", $old.get(0), $new.get(0))
-        # If we keep the entire element we will not morph.
-        $old.replaceWith($new)
-        console.debug("Emitting fragment:kept on new %o", $new.get(0))
-        emitFragmentKept($new)
-        promise = u.resolvedPromise()
-      else
-        replacement = ->
-          # Don't insert the new element after the old element.
-          # For some reason this will make the browser scroll to the
-          # bottom of the new element.
-          $new.insertBefore($old)
-          updateHistory(options)
+        # Don't insert the new element after the old element. For some reason
+        # this will make the browser scroll to the bottom of the new element.
+        $new.insertBefore($old)
 
-          # Remember where the element came from so we can
-          # offer reload functionality.
-          unless options.source is false
-            setSource($new, options.source)
-          autofocus($new)
+        updateHistory(options)
 
-          # The fragment should be compiled before animating,
-          # so transitions see .up-current classes
-          hello($new, options)
+        # Remember where the element came from so we can
+        # offer reload functionality.
+        setSource($new, options.source) unless options.source is false
 
-          if $old.is('body') && transition != 'none'
-            u.error('Cannot apply transitions to body-elements')
-          # Morphing will also process options.reveal
-          up.morph($old, $new, transition, options)
-        # Wrap the replacement as a destroy animation, so $old will
-        # get marked as .up-destroying right away.
-        promise = destroy $old, animation: replacement
-      promise
+        autofocus($new)
+
+        # The fragment should be compiled before animating,
+        # so transitions see .up-current classes
+        hello($new, options)
+
+        # Morphing will also process options.reveal
+        up.morph($old, $new, transition, options)
+
+      # Wrap the replacement as a destroy animation, so $old will
+      # get marked as .up-destroying right away.
+      promise = destroy $old, animation: replacement
+
+    promise
 
   ###*
   DOCUMENT ME
@@ -457,23 +452,22 @@ up.flow = (($) ->
           options.kept.push(keepable)
     options.kept = $(options.kept)
 
-  findSister = ($element, $newTree) ->
-    if $element.is('[up-keep]')
+  findSister = ($element, $newTree, options) ->
+    if options.keep && $element.is('[up-keep]')
       $keepable = $element
       sisterSelector = $keepable.attr('up-keep') || '&'
       sisterSelector = resolveSelector(sisterSelector, $keepable)
       $sister = u.findWithSelf($newTree, sisterSelector).first()
       console.debug("Keepable is %o, sister is %o (lookup through %o, $new was %o)", $keepable.get(0), $sister.get(0), sisterSelector, $new)
-      keepEventArgs =
+
+      description =
         $element: $keepable
         $newElement: $sister
         newData: up.syntax.data($sister)
-        message: ['Keeping element %o', $keepable.get(0)]
+
+      keepEventArgs = u.merge(description, message: ['Keeping element %o', $keepable.get(0)])
       if $sister.length && $sister.is('[up-keep]') && up.bus.nobodyPrevents('up:fragment:keep', keepEventArgs)
-        return {
-          $sister: $sister
-          newData: $sister.attr('up-data')
-        }
+        description
 
   parseImplantSteps = (selector, options) ->
     transitionArg = options.transition || options.animation || 'none'
@@ -553,12 +547,11 @@ up.flow = (($) ->
     The fragment that has been inserted or updated.
   @stable
   ###
-  emitFragmentInserted = (fragment, options) ->
+  emitFragmentInserted = (fragment) ->
     $fragment = $(fragment)
-    eventAttrs = u.options options,
+    up.emit 'up:fragment:inserted',
       $element: $fragment
       message: ['Inserted fragment %o', $fragment.get(0)]
-    up.emit('up:fragment:inserted', eventAttrs)
 
   ###*
   DOCUMENT ME
@@ -583,12 +576,8 @@ up.flow = (($) ->
     parsed as a JSON object.
   @stable
   ###
-  emitFragmentKept = (fragment, options) ->
-    $fragment = $(fragment)
-    eventAttrs = u.options options,
-      $element: $fragment
-      message: ['Kept fragment %o', $fragment.get(0)]
-      newData: up.syntax.data($fragment)
+  emitFragmentKept = (keepInfo) ->
+    eventAttrs = u.merge(keepInfo, message: ['Kept fragment %o', keepInfo.$element.get(0)])
     up.emit('up:fragment:kept', eventAttrs)
 
   autofocus = ($element) ->
