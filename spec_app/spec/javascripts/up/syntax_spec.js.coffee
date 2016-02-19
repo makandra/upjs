@@ -15,8 +15,7 @@ describe 'up.syntax', ->
         expect(observeClass).not.toHaveBeenCalledWith('container')
         expect(observeClass).toHaveBeenCalledWith('child')           
   
-      it 'lets allows initializers return a destructor function, which is called when a compiled fragment gets destroyed', ->
-  
+
         destructor = jasmine.createSpy()
         up.compiler '.child', ($element) ->
           destructor
@@ -49,6 +48,30 @@ describe 'up.syntax', ->
         up.hello(affix(".child"))
 
         expect(observeArgs).toHaveBeenCalledWith('child', {})
+
+      it 'compiles matching elements one-by-one', ->
+        compiler = jasmine.createSpy('compiler')
+        up.compiler '.foo', ($element) -> compiler($element)
+        $container = affix('.container')
+        $first = $container.affix('.foo.first')
+        $second = $container.affix('.foo.second')
+        up.hello($container)
+        expect(compiler.calls.count()).toEqual(2)
+        expect(compiler).toHaveBeenCalledWith($first)
+        expect(compiler).toHaveBeenCalledWith($second)
+
+      describe 'with { batch } option', ->
+
+        it 'compiles all matching elements at once', ->
+          compiler = jasmine.createSpy('compiler')
+          up.compiler '.foo', { batch: true }, ($element) -> compiler($element)
+          $container = affix('.container')
+          $first = $container.affix('.foo.first')
+          $second = $container.affix('.foo.second')
+          $both = $first.add($second)
+          up.hello($container)
+          expect(compiler.calls.count()).toEqual(1)
+          expect(compiler).toHaveBeenCalledWith($both)
 
       describe 'with { keep } option', ->
 
