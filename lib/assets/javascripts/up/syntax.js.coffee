@@ -200,14 +200,18 @@ up.syntax = (($) ->
     # Silently discard any compilers that are registered on unsupported browsers
     return unless up.browser.isSupported()
     compiler = args.pop()
-    options = u.options(args[0], batch: false)
+    options = u.options(args[0])
     compilers.push
       selector: selector
       callback: compiler
       batch: options.batch
-  
+      keep: options.keep
+
   applyCompiler = (compiler, $jqueryElement, nativeElement) ->
     up.puts ("Compiling '%s' on %o" unless compiler.isDefault), compiler.selector, nativeElement
+    if compiler.keep
+      value = if u.isString(compiler.keep) then compiler.keep else ''
+      $jqueryElement.attr('up-keep', value)
     destroyer = compiler.callback.apply(nativeElement, [$jqueryElement, data($jqueryElement)])
     if u.isFunction(destroyer)
       $jqueryElement.addClass(DESTROYABLE_CLASS)

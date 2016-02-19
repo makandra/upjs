@@ -443,23 +443,24 @@ up.flow = (($) ->
     keepPlans
 
   findKeepPlan = ($element, $new, options) ->
-    if options.keep && $element.is('[up-keep]')
+    if options.keep
       $keepable = $element
-      partnerSelector = $keepable.attr('up-keep') || '&'
-      partnerSelector = resolveSelector(partnerSelector, $keepable)
-      if options.descendantsOnly
-        $partner = $new.find(partnerSelector)
-      else
-        $partner = u.findWithSelf($new, partnerSelector)
-      $partner = $partner.first()
-      if $partner.length && $partner.is('[up-keep]')
-        description =
-          $element: $keepable               # the element that should be kept
-          $partner: $partner                # the element that would have replaced it but now does not
-          newData: up.syntax.data($partner) # the parsed up-data attribute of the element we will discard
-        keepEventArgs = u.merge(description, message: ['Keeping element %o', $keepable.get(0)])
-        if up.bus.nobodyPrevents('up:fragment:keep', keepEventArgs)
-          description
+      if partnerSelector = u.castedAttr($keepable, 'up-keep')
+        u.isString(partnerSelector) or partnerSelector = '&'
+        partnerSelector = resolveSelector(partnerSelector, $keepable)
+        if options.descendantsOnly
+          $partner = $new.find(partnerSelector)
+        else
+          $partner = u.findWithSelf($new, partnerSelector)
+        $partner = $partner.first()
+        if $partner.length && $partner.is('[up-keep]')
+          description =
+            $element: $keepable               # the element that should be kept
+            $partner: $partner                # the element that would have replaced it but now does not
+            newData: up.syntax.data($partner) # the parsed up-data attribute of the element we will discard
+          keepEventArgs = u.merge(description, message: ['Keeping element %o', $keepable.get(0)])
+          if up.bus.nobodyPrevents('up:fragment:keep', keepEventArgs)
+            description
 
   parseImplantSteps = (selector, options) ->
     transitionArg = options.transition || options.animation || 'none'
