@@ -512,19 +512,15 @@ describe 'up.flow', ->
           it "does not compile the kept element a second time"
 
           it "only emits an event up:fragment:kept, but not an event up:fragment:inserted", ->
-            insertedListener = jasmine.createSpy()
+            insertedListener = jasmine.createSpy('subscriber to up:fragment:inserted')
             up.on('up:fragment:inserted', insertedListener)
-            keptListener = jasmine.createSpy()
+            keptListener = jasmine.createSpy('subscriber to up:fragment:kept')
             up.on('up:fragment:kept', keptListener)
-            up.on 'up:fragment:kept', (args...) -> console.debug("*** Got kept event with %o ***", args)
-            up.on 'up:fragment:inserted', (args...) -> console.debug("*** Got inserted event with %o ***", args)
+            up.on 'up:fragment:inserted', insertedListener
             $keeper = affix('.keeper[up-keep]').text('old-inside')
-            $keeper.on 'up:fragment:kept', (event) -> console.debug("Got kept event when subscribing directly")
             up.extract '.keeper', "<div class='keeper' up-keep>new-inside</div>"
-            console.debug('-- Checking assertions --')
             expect(insertedListener).not.toHaveBeenCalled()
-            # up.emit('up:fragment:kept')
-            expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $('.keep'), jasmine.anything())
+            expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $('.keeper'), jasmine.anything())
 
         it "removes an [up-keep] element if no matching element is found in the response", ->
           $container = affix('.container')
