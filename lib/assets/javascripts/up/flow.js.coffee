@@ -392,7 +392,6 @@ up.flow = (($) ->
       promise = promise.then -> u.unwrapElement($wrapper)
 
     else if keepPlan = findKeepPlan($old, $new, options)
-      console.debug("Element is kept directly")
       emitFragmentKept(keepPlan)
       promise = u.resolvedPromise()
 
@@ -444,7 +443,6 @@ up.flow = (($) ->
     keepPlans
 
   findKeepPlan = ($element, $new, options) ->
-    console.debug("### Finding plan for %o (%o / %o)", $element.get(0), options.keep, $element.is('[up-keep]'))
     if options.keep && $element.is('[up-keep]')
       $keepable = $element
       partnerSelector = $keepable.attr('up-keep') || '&'
@@ -454,8 +452,6 @@ up.flow = (($) ->
       else
         $partner = u.findWithSelf($new, partnerSelector)
       $partner = $partner.first()
-      console.debug("Keepable is %o, sister is %o (lookup through %o, $new was %o)", $keepable.get(0), $partner.get(0), partnerSelector, $new)
-
       if $partner.length && $partner.is('[up-keep]')
         description =
           $element: $keepable               # the element that should be kept
@@ -519,10 +515,8 @@ up.flow = (($) ->
     options = u.options(options, keepPlans: [])
     keptElements = []
     for plan in options.keepPlans
-      console.debug('Emitting kept %o', plan)
       emitFragmentKept(plan)
       keptElements.push(plan.$element)
-    console.debug('Called hello with %o kept elements (%o)', keptElements.length, keptElements)
     up.syntax.compile($element, kept: keptElements)
     emitFragmentInserted($element, options)
     $element
@@ -542,11 +536,12 @@ up.flow = (($) ->
     The fragment that has been inserted or updated.
   @stable
   ###
-  emitFragmentInserted = (fragment) ->
+  emitFragmentInserted = (fragment, options) ->
     $fragment = $(fragment)
     up.emit 'up:fragment:inserted',
       $element: $fragment
       message: ['Inserted fragment %o', $fragment.get(0)]
+      origin: options.origin
 
   ###*
   DOCUMENT ME

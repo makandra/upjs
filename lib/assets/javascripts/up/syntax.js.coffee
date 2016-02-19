@@ -226,23 +226,12 @@ up.syntax = (($) ->
 
     up.log.group "Compiling fragment %o", $fragment.get(0), ->
       for compiler in compilers
-
-        console.debug("Compiler %o", compiler.selector)
-
-        console.debug("Got %o kept elements (%o)", $keptElements.length, $keptElements.get())
-
         $matches = u.findWithSelf($fragment, compiler.selector)
-
-        console.debug("Got %o matches before filter (%o)", $matches.length, $matches.get())
 
         $matches = $matches.filter ->
           $match = $(this)
           u.all $keptElements, (element) ->
             $match.closest(element).length == 0
-
-        console.debug("Got %o matches after filter (%o)", $matches.length, $matches.get())
-
-        # debugger if compiler.selector == '.keeper'
 
         if $matches.length
           up.log.group ("Compiling '%s' on %d element(s)" unless compiler.isDefault), compiler.selector, $matches.length, ->

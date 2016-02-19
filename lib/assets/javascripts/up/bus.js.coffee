@@ -246,7 +246,6 @@ up.bus = (($) ->
       delete eventProps.$element
     else
       $target = $(document)
-    console.debug("Triggering %o (%o)", eventName, event)
     logEmission(eventName, eventProps)
     $target.trigger(event)
     event
