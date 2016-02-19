@@ -659,7 +659,7 @@ describe 'up.flow', ->
 
         it 'reuses the same element and emits up:fragment:kept during multiple extractions', ->
           keptListener = jasmine.createSpy()
-          up.on('up:fragment:kept', keptListener)
+          up.on 'up:fragment:kept', (event) -> keptListener(event.$element, event.newData)
           $container = affix('.container')
           $keeper = $container.affix('.keeper[up-keep]').text('old-inside')
           up.extract '.keeper', """
@@ -671,9 +671,10 @@ describe 'up.flow', ->
             <div class='container'>
               <div class='keeper' up-keep up-data='{ \"key\": \"value2\" }'>new-inside</div>
           """
-          expect($('.keeper')).toHaveText('old-inside')
-          expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), { key: 'value1' }, jasmine.anything())
-          expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), { key: 'value2' }, jasmine.anything())
+          $keeper = $('.keeper')
+          expect($keeper).toHaveText('old-inside')
+          expect(keptListener).toHaveBeenCalledWith($keeper, { key: 'value1' })
+          expect(keptListener).toHaveBeenCalledWith($keeper, { key: 'value2' })
 
         it "doesn't let the discarded element appear in a transition", (done) ->
           oldTextDuringTransition = undefined
