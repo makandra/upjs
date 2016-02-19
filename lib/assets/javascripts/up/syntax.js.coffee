@@ -229,7 +229,6 @@ up.syntax = (($) ->
 
           console.debug("Compiler %o", compiler.selector)
 
-          # console.debug("Before filter is %o", u.findWithSelf($fragment, compiler.selector).get())
           console.debug("Got %o kept elements (%o)", $keptElements.length, $keptElements.get())
 
           $matches = u.findWithSelf($fragment, compiler.selector)

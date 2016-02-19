@@ -365,8 +365,6 @@ up.flow = (($) ->
     up.motion.finish($old)
 
     if pseudoClass
-      insertionMethod = if pseudoClass == 'before' then 'prepend' else 'append'
-
       # Text nodes are wrapped in a .up-insertion container so we can
       # animate them and measure their position/size for scrolling.
       # This is not possible for container-less text nodes.
@@ -374,29 +372,34 @@ up.flow = (($) ->
 
       # Note that since we're prepending/appending instead of replacing,
       # `$new` will not actually be inserted into the DOM, only its children.
-      $old[insertionMethod]($wrapper)
+      if pseudoClass == 'before'
+        $old.prepend($wrapper)
+      else
+        $old.append($wrapper)
 
-      u.copyAttributes($new, $old)
+      # u.copyAttributes($new, $old)
+
       hello($wrapper.children(), options)
 
       # Reveal element that was being prepended/appended.
       promise = up.layout.revealOrRestoreScroll($wrapper, options)
-      promise = promise.then ->
-        # Since we're adding content instead of replacing, we'll only
-        # animate $new instead of morphing between $old and $new
-        up.animate($wrapper, transition, options)
-      promise = promise.then ->
-        u.unwrapElement($wrapper)
 
-    else if keepInfo = findSister($old, $new, options)
+      # Since we're adding content instead of replacing, we'll only
+      # animate $new instead of morphing between $old and $new
+      promise = promise.then -> up.animate($wrapper, transition, options)
+
+      # Remove the wrapper now that is has served it purpose
+      promise = promise.then -> u.unwrapElement($wrapper)
+
+    else if keepPlan = findKeepPlan($old, $new, options)
       console.debug("Element is kept directly")
-      emitFragmentKept(keepInfo)
+      emitFragmentKept(keepPlan)
       promise = u.resolvedPromise()
 
     else
       replacement = ->
 
-        throw "neues keepElement hier"
+        options.keepPlans = transferKeepableElements($old, $new, options)
 
         # Don't insert the new element after the old element. For some reason
         # this will make the browser scroll to the bottom of the new element.
@@ -419,55 +422,47 @@ up.flow = (($) ->
 
       # Wrap the replacement as a destroy animation, so $old will
       # get marked as .up-destroying right away.
-      promise = destroy $old, animation: replacement
+      promise = destroy($old, animation: replacement)
 
     promise
 
-  ###*
-  DOCUMENT ME
-
-  @function keepElements
-  ###
-  keepElements = ($old, $new, options) ->
-    options.kept = []
-    if u.isPresent(options.keep)
-      throw "komisch das dass auf die presence von options.keep anspringt und dann nix damit macht"
-      for keepable in u.findWithSelf($old, '[up-keep]')
+  transferKeepableElements = ($old, $new, options) ->
+    keepPlans = []
+    if options.keep
+      for keepable in $old.find('[up-keep]')
         $keepable = $(keepable)
-        sisterSelector = $keepable.attr('up-keep') || '&'
-        sisterSelector = resolveSelector(sisterSelector, $keepable)
-        $sister = u.findWithSelf($new, sisterSelector).first()
-        console.debug("Keepable is %o, sister is %o (lookup through %o, $new was %o)", $keepable.get(0), $sister.get(0), sisterSelector, $new)
-        keepEventArgs =
-          $element: $keepable
-          $newElement: $sister
-          newData: up.syntax.data($sister)
-          message: ['Keeping element %o', $keepable.get(0)]
-        if $sister.length && $sister.is('[up-keep]') && up.bus.nobodyPrevents('up:fragment:keep', keepEventArgs)
-          # Copy the updated up-data to $keepable, so we can emit this as
-          $keepable.attr('up-data', $sister.attr('up-data'))
+        if plan = findKeepPlan($keepable, $new, descendantsOnly: true)
+          # Replace $keepable with its clone so it looks good in a transition between
+          # $old and $new. Note that $keepable will still point to the same element
+          # after the replacement, which is now detached.
           $keepableClone = $keepable.clone()
-          $keepable.replaceWith($keepableClone) # now $keepable is detached; its clone is in $keepable's former place within $old
-          $sister.replaceWith($keepable) # now $sister is detached; $keepable is in $sister's former place within $new
-          options.kept.push(keepable)
-    options.kept = $(options.kept)
+          $keepable.replaceWith($keepableClone)
+          # Since we're going to swap the entire $old and $new containers afterwards,
+          # replace the matching element with $keepable so it will eventually return to the DOM.
+          plan.$partner.replaceWith($keepable)
+          keepPlans.push(plan)
+    keepPlans
 
-  findSister = ($element, $newTree, options) ->
+  findKeepPlan = ($element, $new, options) ->
     if options.keep && $element.is('[up-keep]')
       $keepable = $element
-      sisterSelector = $keepable.attr('up-keep') || '&'
-      sisterSelector = resolveSelector(sisterSelector, $keepable)
-      $sister = u.findWithSelf($newTree, sisterSelector).first()
-      console.debug("Keepable is %o, sister is %o (lookup through %o, $new was %o)", $keepable.get(0), $sister.get(0), sisterSelector, $new)
+      partnerSelector = $keepable.attr('up-keep') || '&'
+      partnerSelector = resolveSelector(partnerSelector, $keepable)
+      if options.descendantsOnly
+        $partner = $new.find(partnerSelector)
+      else
+        $partner = u.findWithSelf($new, partnerSelector)
+      $partner = $partner.first()
+      console.debug("Keepable is %o, sister is %o (lookup through %o, $new was %o)", $keepable.get(0), $partner.get(0), partnerSelector, $new)
 
-      description =
-        $element: $keepable
-        $newElement: $sister
-        newData: up.syntax.data($sister)
-
-      keepEventArgs = u.merge(description, message: ['Keeping element %o', $keepable.get(0)])
-      if $sister.length && $sister.is('[up-keep]') && up.bus.nobodyPrevents('up:fragment:keep', keepEventArgs)
-        description
+      if $partner.length && $partner.is('[up-keep]')
+        description =
+          $element: $keepable               # the element that should be kept
+          $partner: $partner                # the element that would have replaced it but now does not
+          newData: up.syntax.data($partner) # the parsed up-data attribute of the element we will discard
+        keepEventArgs = u.merge(description, message: ['Keeping element %o', $keepable.get(0)])
+        if up.bus.nobodyPrevents('up:fragment:keep', keepEventArgs)
+          description
 
   parseImplantSteps = (selector, options) ->
     transitionArg = options.transition || options.animation || 'none'
@@ -519,17 +514,16 @@ up.flow = (($) ->
   @stable
   ###
   hello = (selectorOrElement, options) ->
-    options = u.options(options, kept: [])
-    $keptElements = $(options.kept)
     $element = $(selectorOrElement)
-    console.debug('Called hello with %o kept elements (%o)', $keptElements.length, $keptElements.get())
-    unless $keptElements.is($element)
-      console.debug('Branch1: We are compiling')
-      up.syntax.compile($element, kept: $keptElements)
-      emitFragmentInserted($element, options)
-    for keptElement in $keptElements
+    options = u.options(options, keptDescriptions: [])
+    keptElements = []
+    for description in options.keptDescriptions
       console.debug('Emitting kept %o', keptElement)
-      emitFragmentKept(keptElement)
+      emitFragmentKept(description)
+      keptElements.push(description.$element)
+    console.debug('Called hello with %o kept elements (%o)', keptElements.length, keptElements)
+    up.syntax.compile($element, kept: keptElements)
+    emitFragmentInserted($element, options)
     $element
 
   ###*
@@ -576,8 +570,8 @@ up.flow = (($) ->
     parsed as a JSON object.
   @stable
   ###
-  emitFragmentKept = (keepInfo) ->
-    eventAttrs = u.merge(keepInfo, message: ['Kept fragment %o', keepInfo.$element.get(0)])
+  emitFragmentKept = (keepPlan) ->
+    eventAttrs = u.merge(keepPlan, message: ['Kept fragment %o', keepPlan.$element.get(0)])
     up.emit('up:fragment:kept', eventAttrs)
 
   autofocus = ($element) ->
