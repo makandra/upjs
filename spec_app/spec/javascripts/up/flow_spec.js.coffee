@@ -637,7 +637,7 @@ describe 'up.flow', ->
 
         it 'emits an up:fragment:kept event on a kept element with a newData property corresponding to the up-data attribute value of the discarded element', ->
           keptListener = jasmine.createSpy()
-          up.on('up:fragment:kept', keptListener)
+          up.on 'up:fragment:kept', (event) -> keptListener(event.$element, event.newData)
           $container = affix('.container')
           $keeper = $container.affix('.keeper[up-keep]').text('old-inside')
           up.extract '.container', """
@@ -646,7 +646,7 @@ describe 'up.flow', ->
             </div>
           """
           expect($('.keeper')).toHaveText('old-inside')
-          expect(keptListener).toHaveBeenCalledWith(jasmine.anything(), $keeper, { 'foo': 'bar' })
+          expect(keptListener).toHaveBeenCalledWith($keeper, { 'foo': 'bar' })
 
         it 'emits an up:fragment:kept with { newData: {} } if the discarded element had no up-data value', ->
           keptListener = jasmine.createSpy()
