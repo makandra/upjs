@@ -431,7 +431,7 @@ up.flow = (($) ->
     if options.keep
       for keepable in $old.find('[up-keep]')
         $keepable = $(keepable)
-        if plan = findKeepPlan($keepable, $new, descendantsOnly: true)
+        if plan = findKeepPlan($keepable, $new, u.merge(options, descendantsOnly: true))
           # Replace $keepable with its clone so it looks good in a transition between
           # $old and $new. Note that $keepable will still point to the same element
           # after the replacement, which is now detached.
@@ -444,6 +444,7 @@ up.flow = (($) ->
     keepPlans
 
   findKeepPlan = ($element, $new, options) ->
+    console.debug("### Finding plan for %o (%o / %o)", $element.get(0), options.keep, $element.is('[up-keep]'))
     if options.keep && $element.is('[up-keep]')
       $keepable = $element
       partnerSelector = $keepable.attr('up-keep') || '&'
@@ -515,12 +516,12 @@ up.flow = (($) ->
   ###
   hello = (selectorOrElement, options) ->
     $element = $(selectorOrElement)
-    options = u.options(options, keptDescriptions: [])
+    options = u.options(options, keepPlans: [])
     keptElements = []
-    for description in options.keptDescriptions
-      console.debug('Emitting kept %o', keptElement)
-      emitFragmentKept(description)
-      keptElements.push(description.$element)
+    for plan in options.keepPlans
+      console.debug('Emitting kept %o', plan)
+      emitFragmentKept(plan)
+      keptElements.push(plan.$element)
     console.debug('Called hello with %o kept elements (%o)', keptElements.length, keptElements)
     up.syntax.compile($element, kept: keptElements)
     emitFragmentInserted($element, options)

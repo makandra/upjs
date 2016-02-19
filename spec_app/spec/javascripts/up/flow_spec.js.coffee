@@ -509,6 +509,8 @@ describe 'up.flow', ->
             up.extract '.keeper', "<div class='keeper' up-keep>new-inside</div>"
             expect($('.keeper')).toHaveText('old-inside')
 
+          it "does not compile the kept element a second time"
+
           it "only emits an event up:fragment:kept, but not an event up:fragment:inserted", ->
             insertedListener = jasmine.createSpy()
             up.on('up:fragment:inserted', insertedListener)

@@ -223,7 +223,7 @@ up.syntax = (($) ->
   compile = ($fragment, options) ->
     options = u.options(options)
     $keptElements = $(options.kept)
-    unless $keptElements.is($fragment)
+    unless $fragment.closest($keptElements)
       up.log.group "Compiling fragment %o", $fragment.get(0), ->
         for compiler in compilers
 
