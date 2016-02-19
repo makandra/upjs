@@ -646,6 +646,24 @@ up.util = (($) ->
     match
 
   ###*
+  Returns whether the given function returns a truthy value
+  for all elements in the given array.
+
+  @function up.util.all
+  @param {Array<T>} array
+  @param {Function<T>} tester
+  @return {Boolean}
+  @experimental
+  ###
+  all = (array, tester) ->
+    match = true
+    for element in array
+      unless tester(element)
+        match = false
+        break
+    match
+
+  ###*
   Returns all elements from the given array that are
   neither `null` or `undefined`.
 
@@ -1505,6 +1523,7 @@ up.util = (($) ->
   map: map
   times: times
   any: any
+  all: all
   detect: detect
   select: select
   reject: reject

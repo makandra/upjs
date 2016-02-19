@@ -593,14 +593,17 @@ describe 'up.flow', ->
           up.compiler('.keeper', compiler)
           $container = affix('.container')
           $container.html """
-            <div class="keeper" up-keep></div>
+            <div class="keeper" up-keep>old-text</div>
             """
+
+          console.log '*** before hello ***'
           up.hello($container)
+          console.log '*** after hello ***'
           expect(compiler.calls.count()).toEqual(1)
 
           up.extract '.container', """
             <div class='container'>
-              <div class="keeper" up-keep></div>
+              <div class="keeper" up-keep>new-text</div>
             </div>
             """
           expect(compiler.calls.count()).toEqual(1)

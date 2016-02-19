@@ -223,28 +223,33 @@ up.syntax = (($) ->
   compile = ($fragment, options) ->
     options = u.options(options)
     $keptElements = $(options.kept)
-    unless $fragment.closest($keptElements)
-      up.log.group "Compiling fragment %o", $fragment.get(0), ->
-        for compiler in compilers
 
-          console.debug("Compiler %o", compiler.selector)
+    up.log.group "Compiling fragment %o", $fragment.get(0), ->
+      for compiler in compilers
 
-          console.debug("Got %o kept elements (%o)", $keptElements.length, $keptElements.get())
+        console.debug("Compiler %o", compiler.selector)
 
-          $matches = u.findWithSelf($fragment, compiler.selector)
+        console.debug("Got %o kept elements (%o)", $keptElements.length, $keptElements.get())
 
-          console.debug("Got %o matches before filter (%o)", $matches.length, $matches.get())
+        $matches = u.findWithSelf($fragment, compiler.selector)
 
-          $matches = $matches.filter -> $(this).closest($keptElements).length == 0
+        console.debug("Got %o matches before filter (%o)", $matches.length, $matches.get())
 
-          console.debug("Got %o matches after filter (%o)", $matches.length, $matches.get())
+        $matches = $matches.filter ->
+          $match = $(this)
+          u.all $keptElements, (element) ->
+            $match.closest(element).length == 0
 
-          if $matches.length
-            up.log.group ("Compiling '%s' on %d element(s)" unless compiler.isDefault), compiler.selector, $matches.length, ->
-              if compiler.batch
-                applyCompiler(compiler, $matches, $matches.get())
-              else
-                $matches.each -> applyCompiler(compiler, $(this), this)
+        console.debug("Got %o matches after filter (%o)", $matches.length, $matches.get())
+
+        # debugger if compiler.selector == '.keeper'
+
+        if $matches.length
+          up.log.group ("Compiling '%s' on %d element(s)" unless compiler.isDefault), compiler.selector, $matches.length, ->
+            if compiler.batch
+              applyCompiler(compiler, $matches, $matches.get())
+            else
+              $matches.each -> applyCompiler(compiler, $(this), this)
 
   ###*
   Runs any destroyers on the given fragment and its descendants.
