@@ -181,6 +181,9 @@ up.syntax = (($) ->
     If set to `true` and a fragment insertion contains multiple
     elements matching the selector, `compiler` is only called once
     with a jQuery collection containing all matching elements. 
+  @param {Boolean} [options.keep=false]
+    If set to `true` compiled fragment will be [persisted](/up-keep) during
+    [page updates](/a-up-target).
   @param {Function($element, data)} compiler
     The function to call when a matching element is inserted.
     The function takes the new element as the first argument (as a jQuery object).

@@ -58,7 +58,9 @@ up.flow = (($) ->
   Replaces elements on the current page with corresponding elements
   from a new page fetched from the server.
 
-  The current and new elements must have the same CSS selector.
+  The current and new elements must both match the given CSS selector.
+
+  The UJS variant of this is the [`a[up-target]`](/a-up-target) selector.
 
   \#\#\#\# Example
 
@@ -251,8 +253,6 @@ up.flow = (($) ->
     else
       extract(selector, xhr.responseText, options)
 
-
-
   ###*
   Updates a selector on the current page with the
   same selector from the given HTML string.
@@ -301,7 +301,6 @@ up.flow = (($) ->
       selector = resolveSelector(selectorOrElement, options.origin)
       response = parseResponse(html, options)
       options.title ||= response.title()
-      # options.keep = u.option(options.keep, { '[up-keep]': '&' })
 
       up.layout.saveScroll() unless options.saveScroll == false
 
@@ -442,6 +441,37 @@ up.flow = (($) ->
           keepPlans.push(plan)
     keepPlans
 
+  ###*
+  Elements with an `up-keep` attribute will be persisted during
+  [fragment updates](/a-up-target).
+
+  For example:
+
+      <audio up-keep src="ambience.mp3"></audio>
+
+  \#\#\#\# Controlling if an element will be kept
+
+  Up.js will **not** keep an `[up-kept]` element if:
+
+  - The response contains no element that matches the CSS selector of the old element
+  - The response contains a matching element, but that element no longer has an `up-keep` attribute
+  - A listener calls `event.preventDefault()` on the [`up:fragment:keep`](/up:fragment:keep) event
+    that is [emitted](/up.emit) on the old element.
+
+      up.compiler('audio', function($element) {
+        $element.on('up:fragment:keep', function(event) {
+          if $element.attr('src') !== event.$newElement.attr('src') {
+            event.preventDefault();
+          }
+        });
+      });
+
+Control it on the server
+
+      <audio up-keep="audio[src='ambience.mp3']" src="ambience.mp3"></audio>
+
+  @selector [up-keep]
+  ###
   findKeepPlan = ($element, $new, options) ->
     if options.keep
       $keepable = $element
