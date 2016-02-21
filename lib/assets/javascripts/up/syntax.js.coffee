@@ -231,7 +231,7 @@ up.syntax = (($) ->
   ###
   compile = ($fragment, options) ->
     options = u.options(options)
-    $keptElements = $(options.kept)
+    $skipSubtrees = $(options.skip)
 
     up.log.group "Compiling fragment %o", $fragment.get(0), ->
       for compiler in compilers
@@ -239,7 +239,7 @@ up.syntax = (($) ->
 
         $matches = $matches.filter ->
           $match = $(this)
-          u.all $keptElements, (element) ->
+          u.all $skipSubtrees, (element) ->
             $match.closest(element).length == 0
 
         if $matches.length

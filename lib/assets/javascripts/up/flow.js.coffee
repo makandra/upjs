@@ -605,7 +605,7 @@ up.flow = (($) ->
     for plan in options.keepPlans
       emitFragmentKept(plan)
       keptElements.push(plan.$element)
-    up.syntax.compile($element, kept: keptElements)
+    up.syntax.compile($element, skip: keptElements)
     emitFragmentInserted($element, options)
     $element
 
