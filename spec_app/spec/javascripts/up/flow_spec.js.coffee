@@ -608,10 +608,17 @@ describe 'up.flow', ->
         it 'lets listeners cancel the keeping by preventing default on an up:fragment:keep event', ->
           $keeper = affix('.keeper[up-keep]').text('old-inside')
           $keeper.on 'up:fragment:keep', (event) -> event.preventDefault()
-          up.extract '.keeper', """
-            <div class='keeper' up-keep>new-inside</div>
-          """
+          up.extract '.keeper', "<div class='keeper' up-keep>new-inside</div>"
           expect($('.keeper')).toHaveText('new-inside')
+
+        it 'lets listeners prevent up:fragment:keep event if the element was kept before (bugfix)', ->
+          $keeper = affix('.keeper[up-keep]').text('version 1')
+          $keeper.on 'up:fragment:keep', (event) ->
+            event.preventDefault() if event.$newElement.text() == 'version 3'
+          up.extract '.keeper', "<div class='keeper' up-keep>version 2</div>"
+          expect($('.keeper')).toHaveText('version 1')
+          up.extract '.keeper', "<div class='keeper' up-keep>version 3</div>"
+          expect($('.keeper')).toHaveText('version 3')
 
         it 'emits an up:fragment:kept event on a kept element and up:fragment:inserted on an updated parent', ->
           insertedListener = jasmine.createSpy()

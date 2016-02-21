@@ -45,8 +45,8 @@ up.log = (($) ->
   group = (message, args...) ->
     block = args.pop() # Coffeescript copies the arguments array
     if message
-      # up.browser.puts('groupCollapsed', prefix(message), args...)
-      up.browser.puts('log', prefix(message), args...)
+      up.browser.puts('groupCollapsed', prefix(message), args...)
+      # up.browser.puts('log', prefix(message), args...)
       try
         block()
       finally

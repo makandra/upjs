@@ -437,7 +437,7 @@ up.flow = (($) ->
           $keepable.replaceWith($keepableClone)
           # Since we're going to swap the entire $old and $new containers afterwards,
           # replace the matching element with $keepable so it will eventually return to the DOM.
-          plan.$partner.replaceWith($keepable)
+          plan.$newElement.replaceWith($keepable)
           keepPlans.push(plan)
     keepPlans
 
@@ -455,7 +455,7 @@ up.flow = (($) ->
         if $partner.length && $partner.is('[up-keep]')
           description =
             $element: $keepable               # the element that should be kept
-            $partner: $partner                # the element that would have replaced it but now does not
+            $newElement: $partner             # the element that would have replaced it but now does not
             newData: up.syntax.data($partner) # the parsed up-data attribute of the element we will discard
           keepEventArgs = u.merge(description, message: ['Keeping element %o', $keepable.get(0)])
           if up.bus.nobodyPrevents('up:fragment:keep', keepEventArgs)
