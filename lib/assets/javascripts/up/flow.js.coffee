@@ -441,37 +441,6 @@ up.flow = (($) ->
           keepPlans.push(plan)
     keepPlans
 
-  ###*
-  Elements with an `up-keep` attribute will be persisted during
-  [fragment updates](/a-up-target).
-
-  For example:
-
-      <audio up-keep src="ambience.mp3"></audio>
-
-  \#\#\#\# Controlling if an element will be kept
-
-  Up.js will **not** keep an `[up-kept]` element if:
-
-  - The response contains no element that matches the CSS selector of the old element
-  - The response contains a matching element, but that element no longer has an `up-keep` attribute
-  - A listener calls `event.preventDefault()` on the [`up:fragment:keep`](/up:fragment:keep) event
-    that is [emitted](/up.emit) on the old element.
-
-      up.compiler('audio', function($element) {
-        $element.on('up:fragment:keep', function(event) {
-          if $element.attr('src') !== event.$newElement.attr('src') {
-            event.preventDefault();
-          }
-        });
-      });
-
-Control it on the server
-
-      <audio up-keep="audio[src='ambience.mp3']" src="ambience.mp3"></audio>
-
-  @selector [up-keep]
-  ###
   findKeepPlan = ($element, $new, options) ->
     if options.keep
       $keepable = $element
@@ -491,6 +460,94 @@ Control it on the server
           keepEventArgs = u.merge(description, message: ['Keeping element %o', $keepable.get(0)])
           if up.bus.nobodyPrevents('up:fragment:keep', keepEventArgs)
             description
+
+  ###*
+  Elements with an `up-keep` attribute will be persisted during
+  [fragment updates](/a-up-target).
+
+  For example:
+
+      <audio up-keep src="song.mp3"></audio>
+
+  The element you're keeping should have an umambiguous class name, ID or `up-id`
+  attribute so Up.js can find its new position within the page update.
+
+  Emits events [`up:fragment:keep`](/up:fragment:keep) and [`up:fragment:kept`](/up:fragment:kept).
+
+  \#\#\#\# Controlling if an element will be kept
+
+  Up.js will **only** keep an existing element if:
+
+  - The existing element has an `up-keep` attribute
+  - The response contains an element matching the CSS selector of the existing element
+  - The matching element *also* has an `up-keep` attribute
+  - The [`up:fragment:keep`](/up:fragment:keep) event that is [emitted](/up.emit) on the existing element
+    is not prevented by a event listener.
+
+  Let's say we want only keep an `<audio>` element as long as it plays
+  the same song (as identified by the tag's `src` attribute).
+
+  On the client we can achieve this by listening to an `up:keep:fragment` event
+  and preventing it if the `src` attribute of the old and new element differ:
+
+      up.compiler('audio', function($element) {
+        $element.on('up:fragment:keep', function(event) {
+          if $element.attr('src') !== event.$newElement.attr('src') {
+            event.preventDefault();
+          }
+        });
+      });
+
+  If we don't want to solve this on the client, we can achieve the same effect
+  on the server. By setting the value of the `up-keep` attribute we can
+  define the CSS selector used for matching elements.
+
+      <audio up-keep="audio[src='song.mp3']" src="song.mp3"></audio>
+
+  Now, if a response no longer contains an `<audio src="song.mp3">` tag, the existing
+  element will be destroyed and replaced by a fragment from the response.
+
+  @selector [up-keep]
+  ###
+
+  ###*
+  This event is [emitted](/up.emit) before an existing element is [kept](/up-keep) during
+  a page update.
+
+  Event listeners can call `event.preventDefault()` on an `up:fragment:keep` event
+  to prevent the element from being persisted. If the event is prevented, the element
+  will be replaced by a fragment from the response.
+
+  @event up:fragment:keep
+  @param event.preventDefault()
+    Event listeners may call this method to prevent the element from being preserved.
+  @param {jQuery} event.$element
+    The fragment that will be kept.
+  @param {jqQuery} event.$newElement
+    The discarded element.
+  @param {jQuery} event.newData
+    The value of the [`up-data`](/up-data) attribute of the discarded element,
+    parsed as a JSON object.
+  @stable
+  ###
+
+  ###*
+  This event is [emitted](/up.emit) when an existing element has been [kept](/up-keep)
+  during a page update.
+
+  Event listeners can inspect the discarded update through `event.$newElement`
+  and `event.newData` and then modify the preserved element when necessary.
+
+  @event up:fragment:kept
+  @param {jQuery} event.$element
+    The fragment that has been kept.
+  @param {jqQuery} event.$newElement
+    The discarded element.
+  @param {jQuery} event.newData
+    The value of the [`up-data`](/up-data) attribute of the discarded element,
+    parsed as a JSON object.
+  @stable
+  ###
 
   parseImplantSteps = (selector, options) ->
     transitionArg = options.transition || options.animation || 'none'
@@ -574,29 +631,6 @@ Control it on the server
       message: ['Inserted fragment %o', $fragment.get(0)]
       origin: options.origin
 
-  ###*
-  DOCUMENT ME
-
-  @event up:fragment:keep
-  @param {jQuery} event.$element
-    The fragment that has been kept.
-  @param {jQuery} event.newData
-    The value of the [`up-data`](/up-data) attribute of the discarded element,
-    parsed as a JSON object.
-  @stable
-  ###
-
-  ###*
-  DOCUMENT ME
-
-  @event up:fragment:kept
-  @param {jQuery} event.$element
-    The fragment that has been kept.
-  @param {jQuery} event.newData
-    The value of the [`up-data`](/up-data) attribute of the discarded element,
-    parsed as a JSON object.
-  @stable
-  ###
   emitFragmentKept = (keepPlan) ->
     eventAttrs = u.merge(keepPlan, message: ['Kept fragment %o', keepPlan.$element.get(0)])
     up.emit('up:fragment:kept', eventAttrs)

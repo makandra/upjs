@@ -184,6 +184,8 @@ up.syntax = (($) ->
   @param {Boolean} [options.keep=false]
     If set to `true` compiled fragment will be [persisted](/up-keep) during
     [page updates](/a-up-target).
+
+    This has the same effect as setting an `up-keep` attribute on the element.
   @param {Function($element, data)} compiler
     The function to call when a matching element is inserted.
     The function takes the new element as the first argument (as a jQuery object).
