@@ -1,67 +1,64 @@
-Up.js + Rails bindings
-======================
+Up.js has been renamed to Unpoly
+================================
 
-Up.js gives your traditional web application fast-responding views with minimal changes to your code and development style. If you require modern UX but don't want to pay the Javascript complexity tax, Up.js can be a solution for you.
+Starting with version `0.20.0` *Up.js* has been renamed to *Unpoly*.
 
-This repository is home both to the Up.js javascript code and its (optional) bindings for Ruby on Rails (`upjs-rails` gem).
-
-
-Getting started
----------------
-
-- See [upjs.io](http://upjs.io) for more information and Javascript API documentation.
-- See [`CHANGELOG.md`](https://github.com/makandra/upjs/blob/master/CHANGELOG.md) for notable changes.
-- See [`README_RAILS.md`](https://github.com/makandra/upjs/blob/master/README_RAILS.md) documentation of the Rails bindings.
+See <https://github.com/unpoly/unpoly> for the new repository.
 
 
-Running tests
--------------
+Migrating
+---------
 
-Overview:
-
-- This currently requires Ruby
-- There's a Rails app in `spec_app`
-- Jasmine tests for Up.js live in `spec_app/spec/javascripts`
-- RSpec tests for the `upjs-rails` gem live in `spec_app/spec/controllers`
-
-Install dependencies for tests:
-
-- Install Ruby 2.1.2
-- Install Bundler by running `gem install bundler`
-- `cd` into `spec_app`
-- Install dependencies by running `bundle install`
-
-To run Jasmine tests for Up.js:
-
-- `cd` into `spec_app`
-- Start the Rails server by running `rails server`
-- Access `http://localhost:3000/specs` to see the Jasmine test runner
-
-To run RSpec tests for the `upjs-rails` gem:
-
-- `cd` into `spec_app`
-- Run `rspec`
+Pick the sections below that apply to your application.
 
 
-Making a new release
---------------------
+### New Javascript and stylesheet files
 
-We are currently feeding three release channels:
+The new Javascript and stylesheet assets are:
 
-- Manual download from Github
-- Bower (this also fetches from Github)
-- Rubygems (as the `upjs-rails` gem)
+- [`unpoly.js`](https://raw.githubusercontent.com/unpoly/unpoly/master/dist/unpoly.js)
+- [`unpoly.min.js`](https://raw.githubusercontent.com/unpoly/unpoly/master/dist/unpoly.min.js)
+- [`unpoly.css`](https://raw.githubusercontent.com/unpoly/unpoly/master/dist/unpoly.css)
+- [`unpoly.min.css`](https://raw.githubusercontent.com/unpoly/unpoly/master/dist/unpoly.min.css)
 
-We always release to all channel simultaneously.
+If you're using the Bootstrap integration the new assets are:
 
-To make a new release:
+- [`unpoly-bootstrap3.js`](https://raw.githubusercontent.com/unpoly/unpoly/master/dist/unpoly-bootstrap3.js)
+- [`unpoly-bootstrap3.min.js`](https://raw.githubusercontent.com/unpoly/unpoly/master/dist/unpoly-bootstrap3.min.js)
+- [`unpoly-bootstrap3.css`](https://raw.githubusercontent.com/unpoly/unpoly/master/dist/unpoly-bootstrap3.css)
+- [`unpoly-bootstrap3.min.css`](https://raw.githubusercontent.com/unpoly/unpoly/master/dist/unpoly-bootstrap3.min.css)
 
-- Edit `lib/upjs/rails/version.rb` and bump the version number. Use [semantic versioning](http://semver.org/).
-- Add an entry to `CHANGELOG.md`
-- Commit and push the version bump and `CHANGELOG.md`
-- From the project root, type `rake assets:compile`. This will output minified JS and CSS files to the `dist` folder.
-- Commit and push the generated files in `dist`
-- From the project root, type `rake release`. This will publish a new gem version to Rubygems.org.
-  It will also push a tag for this version, which Bower requires for its own versioning scheme.
 
-Always run `rake assets:compile` before `rake release` so the git tag points to the correct commit (required for Bower versioning).
+### Rubygem dependency
+
+If you're using the Rails bindings, open your `Gemfile` and change ...
+
+```
+gem 'upjs-rails'
+```
+
+... to
+
+```
+gem 'unpoly-rails'
+```
+
+Then run `bundle install`.
+
+
+### Bower package
+
+The Bower package has been renamed from `upjs` to `unpoly`.
+
+
+### Javascript API
+
+All functions remain in the `up` namespace, so e.g. `up.replace` is still called `up.replace`.
+
+
+### Unobtrusive HTML attributes
+
+All UJS functionality remains unchanged, so e.g. `up-target` is still called `up-target`.
+
+
+
